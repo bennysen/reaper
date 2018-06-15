@@ -38,7 +38,6 @@ public class Test {
 		CloseableHttpClient httpClient;
 		StandardHttpRequestRetryHandler standardHandler = new StandardHttpRequestRetryHandler(5, true);
 		HttpRequestRetryHandler handler = new HttpRequestRetryHandler() {
-
 			@Override
 			public boolean retryRequest(IOException arg0, int retryTimes, HttpContext arg2) {
 				if (arg0 instanceof UnknownHostException || arg0 instanceof ConnectTimeoutException
@@ -69,7 +68,9 @@ public class Test {
 	
 	static RequestConfig config = RequestConfig.custom().setConnectTimeout(6000).setSocketTimeout(6000)  
             .setCookieSpec(CookieSpecs.STANDARD_STRICT).build(); // 设置超时及cookie策略  
-    public static String getDemo(String url) {  
+	
+	
+    public static String get(String url) {  
         HttpGet get = new HttpGet(url);  
         get.setConfig(config);
         HttpResponse response = null;  
@@ -95,46 +96,7 @@ public class Test {
 	public static void main(String[] args) {
 		String url = "http://v.ifeng.com/video_15539114.shtml";
 		
-		getDemo(url);
-//		CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
-//				.setConnectionRequestTimeout(20000).setConnectTimeout(20000).setSocketTimeout(20000).build()).build();
-		// HttpPost post = new HttpPost(url);
-//		HttpGet get = new HttpGet(url);
-//
-//		CloseableHttpResponse response;
-//		HttpEntity entity = null;
-//		try {
-//			// response = client.execute(post);
-//
-//			response = client.execute(get);
-//
-//			// 服务器返回码
-//			int status_code = response.getStatusLine().getStatusCode();
-//			System.out.println("status_code = " + status_code);
-//
-//			// 服务器返回内容
-//			String respStr = null;
-//			entity = response.getEntity();
-//			if (entity != null) {
-//				respStr = EntityUtils.toString(entity, "UTF-8");
-//			}
-//			System.out.println("respStr = " + respStr);
-//
-//		} catch (ClientProtocolException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} finally {
-//			// 释放资源
-//			try {
-//				EntityUtils.consume(entity);
-//			} catch (IOException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//		}
+		get(url);
 	}
 
 }

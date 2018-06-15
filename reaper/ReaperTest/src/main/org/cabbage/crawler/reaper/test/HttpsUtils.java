@@ -100,7 +100,7 @@ public class HttpsUtils {
 				HttpEntity resEntity = httpResponse.getEntity();
 				result = EntityUtils.toString(resEntity);
 			} else {
-				readHttpResponse(httpResponse);
+				result = readHttpResponse(httpResponse);
 			}
 		} catch (Exception e) {
 			throw e;
@@ -111,14 +111,16 @@ public class HttpsUtils {
 		}
 		return result;
 	}
+	
+	
 
-	public static CloseableHttpClient getHttpClient() throws Exception {
+	private static CloseableHttpClient getHttpClient() throws Exception {
 		CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(SSL_CONNECTION_SOCKET_FACTORY)
 				.setConnectionManager(POOLING_HTTPCLIENT_CONNECTION_MANAGER).setConnectionManagerShared(true).build();
 		return httpClient;
 	}
 
-	public static String readHttpResponse(HttpResponse httpResponse) throws ParseException, IOException {
+	private static String readHttpResponse(HttpResponse httpResponse) throws ParseException, IOException {
 		StringBuilder builder = new StringBuilder();
 		// 获取响应消息实体
 		HttpEntity entity = httpResponse.getEntity();
