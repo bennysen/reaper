@@ -195,7 +195,7 @@ public class HttpClientUtils {
 			public boolean retryRequest(IOException arg0, int retryTimes, HttpContext arg2) {
 				if (arg0 instanceof UnknownHostException || arg0 instanceof ConnectTimeoutException
 						|| !(arg0 instanceof SSLException) || arg0 instanceof NoHttpResponseException) {
-					return true;
+					return false;
 				}
 				if (retryTimes > 5) {
 					return false;
@@ -252,7 +252,7 @@ public class HttpClientUtils {
 	}
 
 	public static void main(String[] args) {
-		String url = "http://v.ifeng.com/video_15539114.shtml";
+		String url = "http://v.ifeng1.com/video_15539114.shtml";
 		HttpClientUtils client = new HttpClientUtils();
 		client.get(url, null, null, "iso-8859-1");
 	}
