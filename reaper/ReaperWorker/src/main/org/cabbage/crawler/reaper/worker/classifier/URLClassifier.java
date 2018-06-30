@@ -21,7 +21,7 @@ import org.cabbage.crawler.reaper.worker.classifier.utils.URLClassifierEntity;
  */
 public class URLClassifier {
 
-	public static List<URLClassifierEntity> urlCrawledFilter(String taskurl, Set<String> urlSet) {
+	public synchronized static List<URLClassifierEntity> urlCrawledFilter(String taskurl, Set<String> urlSet) {
 		List<URLClassifierEntity> urlList = new ArrayList<URLClassifierEntity>();
 		if (CollectionUtils.isEmpty(urlSet)) {
 			return urlList;

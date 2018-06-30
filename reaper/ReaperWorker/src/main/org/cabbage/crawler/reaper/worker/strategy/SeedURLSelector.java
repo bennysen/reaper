@@ -6,7 +6,7 @@ package org.cabbage.crawler.reaper.worker.strategy;
  * @author wkshen
  *
  */
-public class SeedURLChoice {
+public class SeedURLSelector {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub

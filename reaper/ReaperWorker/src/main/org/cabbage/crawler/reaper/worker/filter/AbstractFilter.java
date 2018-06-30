@@ -1,5 +1,7 @@
 package org.cabbage.crawler.reaper.worker.filter;
 
+import java.util.Set;
+
 /**
  * 过滤器抽象类
  * 
@@ -8,9 +10,11 @@ package org.cabbage.crawler.reaper.worker.filter;
  */
 public abstract class AbstractFilter {
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+	public abstract Set<String> filter();
 
+	public static void main(String[] args) {
+		AbstractFilter f = new ComplexFilter();
+		f.filter();
 	}
 
 }
