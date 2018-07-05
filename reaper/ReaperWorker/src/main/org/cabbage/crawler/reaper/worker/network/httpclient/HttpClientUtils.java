@@ -173,6 +173,9 @@ public class HttpClientUtils {
 					System.out.println(header);
 				}
 				// html = EntityUtils.toString(resEntity);
+				if (null == charset || charset.trim().length() == 0) {
+					charset = "utf-8";
+				}
 				html = new String(EntityUtils.toString(resEntity).getBytes(charset), "UTF-8");
 				// 在后面参数输入网站的编码，一般为utf-8
 				// 返回的html代码,避免发生编码错误

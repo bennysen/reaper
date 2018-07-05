@@ -2,10 +2,11 @@ package org.cabbage.crawler.reaper.worker.html.extractor;
 
 /**
  * 内容抽取中可能出现的异常信息
- * @author Stream
+ * 
+ * @author wkshen
  *
  */
-public class ExtractException extends Exception{
+public class ExtractException extends Exception {
 	/**
 	 * 
 	 */

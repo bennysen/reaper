@@ -9,9 +9,8 @@ import java.util.Set;
  *
  */
 public class BackLinkCounter {
-	
-	
-	public static synchronized long count (Set<String> links){
+
+	public static synchronized long count(Set<String> links) {
 		return 0;
 	}
 

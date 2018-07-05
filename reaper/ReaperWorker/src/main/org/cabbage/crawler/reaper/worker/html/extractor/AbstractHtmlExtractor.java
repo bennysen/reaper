@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Matcher;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
@@ -40,11 +40,11 @@ import au.id.jericho.lib.html.Tag;
 /**
  * HTML页面的抽取抽象接口
  * 
- * @author Stream
+ * @author wkshen
  * 
  */
 public abstract class AbstractHtmlExtractor extends AbstractExtractor {
-	
+
 	protected static Log LOGGER = LogFactory.getLog(AbstractHtmlExtractor.class);
 
 	/**
@@ -67,7 +67,7 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 	/**
 	 * 存储文本节点信息，利用这些节点的偏移量作为索引
 	 */
-	protected HashMap<Integer, String> _textMap = new HashMap<Integer, String>();
+	protected HashMap<Integer, String> textMap = new HashMap<Integer, String>();
 
 	@SuppressWarnings("unchecked")
 	private static HashSet<String> buildHtmlFlagSet() {
@@ -103,7 +103,6 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 			source.fullSequentialParse();
 			buildTextIndex();
 			buildDom();
-			// this._articles = extractArticles();
 		} catch (IOException e) {
 			throw new ExtractException(e);
 		}
@@ -116,7 +115,6 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 		source.fullSequentialParse();
 		buildTextIndex();
 		buildDom();
-		// this._articles = extractArticles();
 	}
 
 	/**
@@ -153,8 +151,8 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 					String content = AbstractExtractor.earseISOControlChar(text);
 					if (content.length() < 1)
 						continue;
-					if (this.acceptNodeText(node)) {
-						this._textMap.put(node.getBegin(), content);
+					if (this.isAcceptNodeText(node)) {
+						this.textMap.put(node.getBegin(), content);
 					} else {
 						continue;
 					}
@@ -170,7 +168,7 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 	 *            一个标记节点
 	 * @return 需要保留，返回true,否则返回false
 	 */
-	public abstract boolean acceptNodeText(Segment node);
+	public abstract boolean isAcceptNodeText(Segment node);
 
 	@SuppressWarnings("unchecked")
 	private void buildDom() {
@@ -185,7 +183,7 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 
 	@SuppressWarnings("unchecked")
 	private void visitNodes(final Element htmlElement, org.dom4j.Element domElement) {
-		if (!acceptNode(htmlElement))
+		if (!isAcceptNode(htmlElement))
 			return;
 
 		org.dom4j.Element htmlDomElement = html2dom(domElement, htmlElement);
@@ -196,8 +194,15 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 		// 处理title
 		if (htmlElement.getName() == HTMLElements.TITLE) {
 			String text = htmlElement.getTextExtractor().toString();
-			if (text != null && text.length() > this.title.length()) {
-				this.title = text;
+			if (text != null && text.trim().length() > 0) {
+				if (this.title == null || this.title.trim().length() == 0) {
+					this.title = text;
+				} else {
+					if (null != this.title && this.title.trim().length() > 0
+							&& text.trim().length() > this.title.trim().length()) {
+						this.title = text;
+					}
+				}
 			}
 			if (text != null)
 				htmlDomElement.setText(this.title);
@@ -215,8 +220,8 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 		// 处理text数据，由于html的tag是不完全的，需要分类处理
 		// 这里不区分闭合与非闭合标签，只区分谁更近一些
 		StartTag stag = htmlElement.getStartTag();
-		if (this._textMap.containsKey(stag.getEnd())) {// 有text
-			htmlDomElement.setText(this._textMap.get(stag.getEnd()));
+		if (this.textMap.containsKey(stag.getEnd())) {// 有text
+			htmlDomElement.setText(this.textMap.get(stag.getEnd()));
 		}
 
 		List<Element> list = htmlElement.getChildElements();
@@ -224,8 +229,8 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 			return;
 		for (Element e : list) {
 			visitNodes(e, htmlDomElement);
-			if (e.getStartTag().isEndTagRequired() && this._textMap.containsKey(e.getEnd())) {
-				htmlDomElement.addText(this._textMap.get(e.getEnd()));
+			if (e.getStartTag().isEndTagRequired() && this.textMap.containsKey(e.getEnd())) {
+				htmlDomElement.addText(this.textMap.get(e.getEnd()));
 			}
 		}
 	}
@@ -288,26 +293,6 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 	}
 
 	/**
-	 * 评定一个节点是否其内部样式定义了为display:none
-	 * 
-	 * @param htmlElement
-	 *            待评定的html节点
-	 * @return true:存在display:none，false：不存在
-	 */
-	public static synchronized boolean isStyleNoneDisplay(final Element htmlElement) {
-		if (_styleDisplayNonePattern == null) {
-			_styleDisplayNonePattern = Pattern.compile("(display:\\s*none)|(font-size:\\s*0px)",
-					Pattern.CASE_INSENSITIVE);
-		}
-		String style = htmlElement.getAttributeValue("style");
-		if (style != null && style.length() > 10) {
-			Matcher matcher = _styleDisplayNonePattern.matcher(style);
-			return matcher.find();
-		}
-		return false;
-	}
-
-	/**
 	 * 过滤title中的噪音信息，仅提取关键的标题信息
 	 * 
 	 * @param title
@@ -343,11 +328,8 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 	@SuppressWarnings("unchecked")
 	public List<String> getUrlsFilterBlackLinks() {
 		ArrayList<String> list = new ArrayList<String>();
-		// System.err.println(this._doc.asXML());
 		try {
 			List<DefaultElement> nodes = this.document.selectNodes("//div[contains(@style,'hidden')]");
-			// List<DefaultElement> nodes =
-			// this._doc.selectNodes("//body[contains(@class,'pc')]");
 			if (null != nodes && nodes.size() > 0) {
 				for (DefaultElement e : nodes) {
 					e.getParent().remove(e);
@@ -415,14 +397,7 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 	public List<String> getUrls() {
 		ArrayList<String> list = new ArrayList<String>();
 		List<DefaultAttribute> elements = this.document.selectNodes("//@href");
-		for (DefaultAttribute element : elements) {
-			String url = element.getText();
-			if (isJunkUrl(url)) {
-				continue;
-			}
-			list.add(url);
-		}
-		elements = this.document.selectNodes("//@HREF");
+		elements.addAll(this.document.selectNodes("//@HREF"));
 		for (DefaultAttribute element : elements) {
 			String url = element.getText();
 			if (isJunkUrl(url)) {
@@ -431,6 +406,21 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 			list.add(url);
 		}
 		return list;
+	}
+
+	@SuppressWarnings("unchecked")
+	public Map<String, DefaultAttribute> getUrlsWithAttribute() {
+		Map<String, DefaultAttribute> map = new HashMap<String, DefaultAttribute>();
+		List<DefaultAttribute> elements = this.document.selectNodes("//@href");
+		elements.addAll(this.document.selectNodes("//@HREF"));
+		for (DefaultAttribute element : elements) {
+			String url = element.getText();
+			if (isJunkUrl(url)) {
+				continue;
+			}
+			map.put(url, element);
+		}
+		return map;
 	}
 
 	private boolean isJunkUrl(String url) {
@@ -519,7 +509,6 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 		}
 	}
 
-
 	public Document getDom() {
 		return document;
 	}
@@ -596,9 +585,7 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 	 *            HTML节点元素，节点操作方法，请参见jericho的Element说明
 	 * @return 返回true，那么该节点保留；返回false，那么该节点丢弃
 	 */
-	public abstract boolean acceptNode(final Element htmlElement);
-
-
+	public abstract boolean isAcceptNode(final Element htmlElement);
 
 	/**
 	 * 将流数据转换成StringBuffer
