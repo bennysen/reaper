@@ -1,9 +1,10 @@
-package org.cabbage.crawler.reaper.worker.main;
+package org.cabbage.crawler.reaper.worker.thread;
 
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.cabbage.crawler.reaper.worker.main.ReaperWorker;
 
 
 /**

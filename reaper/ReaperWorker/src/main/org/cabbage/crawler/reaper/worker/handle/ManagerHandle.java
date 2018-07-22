@@ -23,9 +23,9 @@ import com.google.gson.reflect.TypeToken;
 
 public class ManagerHandle {
 
-	protected final Map<String, CrawlerWorkerHandle> runTaskList = new ConcurrentHashMap<String, CrawlerWorkerHandle>();
+	protected final Map<String, WorkerHandle> runTaskList = new ConcurrentHashMap<String, WorkerHandle>();
 
-	protected final Map<String, CrawlerWorkerHandle> stopTaskList = new ConcurrentHashMap<String, CrawlerWorkerHandle>();
+	protected final Map<String, WorkerHandle> stopTaskList = new ConcurrentHashMap<String, WorkerHandle>();
 
 	public void checkAllTaskState() throws ReaperWorkerException {
 		Iterator<String> it = runTaskList.keySet().iterator();
@@ -97,7 +97,7 @@ public class ManagerHandle {
 			return false;
 		} else {
 			AppContext.setLastActiveTimeMap(task.getId() + "", new Date());
-			CrawlerWorkerHandle workHandle = new CrawlerWorkerHandle();
+			WorkerHandle workHandle = new WorkerHandle();
 			workHandle.setTask(task);
 			workHandle.setModule(module);
 			workHandle.initialize();

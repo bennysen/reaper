@@ -7,6 +7,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.cabbage.commons.utils.DateUtils;
 import org.cabbage.commons.utils.file.FileUtils;
+import org.cabbage.crawler.reaper.worker.thread.RequestTaskThread;
 import org.cabbage.crawler.reaper.worker.utils.ReduceUtils;
 
 /**
