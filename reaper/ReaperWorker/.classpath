@@ -22,6 +22,5 @@
 	<classpathentry kind="lib" path="lib/cabbage-commons-webTemplate.jar"/>
 	<classpathentry kind="lib" path="lib/gson-2.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/mapdb-1.0.8.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ReaperCommons"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

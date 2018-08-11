@@ -6,16 +6,22 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * 自动过滤器
+ * 组合过滤器
  * 
  * @author wkshen
  *
  */
 public class ComplexFilter extends AbstractFilter {
 
+	//过滤器集合
 	private List<AbstractFilter> filterList = new ArrayList<AbstractFilter>();
 
-	public ComplexFilter setFilter(AbstractFilter filter) {
+	/**
+	 * 添加过滤器
+	 * @param filter 过滤器
+	 * @return 当前组合过滤器引用
+	 */
+	public ComplexFilter addFilter(AbstractFilter filter) {
 		if (null == filter) {
 
 		} else {
@@ -26,6 +32,13 @@ public class ComplexFilter extends AbstractFilter {
 			}
 		}
 		return this;
+	}
+
+	/**
+	 * 清空过滤器集合
+	 */
+	public void clearFilter() {
+		filterList.clear();
 	}
 
 	@Override
@@ -59,7 +72,7 @@ public class ComplexFilter extends AbstractFilter {
 	}
 
 	public static void main(String[] args) {
-		ComplexFilter sf = new ComplexFilter().setFilter(null);
+		ComplexFilter sf = new ComplexFilter().addFilter(null);
 		sf.filter();
 	}
 
