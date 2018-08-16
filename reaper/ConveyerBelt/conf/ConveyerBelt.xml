@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<propertys>
+	<property>
+		<name>master</name>
+		<value>10.1.23.61:50000</value>
+	</property>
+</propertys>
