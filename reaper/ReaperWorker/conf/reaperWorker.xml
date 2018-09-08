@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<propertys>
+	<!-- mq configure -->
+	<property>
+		<name>mq_host</name>
+		<value>192.168.80.101</value>
+	</property>
+	<property>
+		<name>mq_port</name>
+		<value>5672</value>
+	</property>
+	<property>
+		<name>mq_username</name>
+		<value>admin</value>
+	</property>
+	<property>
+		<name>mq_password</name>
+		<value>123456</value>
+	</property>
+	<property>
+		<name>mq_q_ori</name>
+		<value>ori</value>
+	</property>
+	<!-- reaper coordinator configure -->
+	<property>
+		<name>requestTaskURL</name>
+		<value>ori</value>
+	</property>
+	<property>
+		<name>responseTaskURL</name>
+		<value>ori</value>
+	</property>
+	<property>
+		<name>resetTaskURL</name>
+		<value>ori</value>
+	</property>
+	<!-- reaper worker configure -->
+	<property>
+		<name>maxTaskCount</name>
+		<value>100</value>
+	</property>
+	<property>
+		<name>maxTaskHeartbeatIdleSecond</name>
+		<value>300</value>
+	</property>
+</propertys>

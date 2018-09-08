@@ -24,5 +24,6 @@
 	<classpathentry kind="lib" path="lib/mapdb-1.0.8.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CommonUtils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ReaperCommons"/>
+	<classpathentry kind="lib" path="lib/jdom-1.1.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

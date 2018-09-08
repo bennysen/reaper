@@ -1,7 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <propertys>
+	<!-- mq configure -->
 	<property>
-		<name>master</name>
-		<value>10.1.23.61:50000</value>
+		<name>mq_host</name>
+		<value>192.168.80.101</value>
+	</property>
+	<property>
+		<name>mq_port</name>
+		<value>5672</value>
+	</property>
+	<property>
+		<name>mq_username</name>
+		<value>admin</value>
+	</property>
+	<property>
+		<name>mq_password</name>
+		<value>123456</value>
+	</property>
+	<property>
+		<name>mq_q_ori</name>
+		<value>ori</value>
 	</property>
 </propertys>
