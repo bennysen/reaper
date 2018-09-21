@@ -1,4 +1,4 @@
-package org.cabbage.crawler.reaper.commons.object.persistent.cassandra;
+package org.cabbage.crawler.reaper.beans.persistent.cassandra;
 
 import java.util.Collection;
 import java.util.HashSet;

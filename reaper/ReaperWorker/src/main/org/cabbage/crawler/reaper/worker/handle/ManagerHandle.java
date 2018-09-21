@@ -11,17 +11,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.cabbage.commons.utils.file.FileUtils;
 import org.cabbage.commons.utils.json.Json;
 import org.cabbage.commons.web.servlet.base.BaseResult;
+import org.cabbage.crawler.reaper.commons.object.business.task.ReaperTask;
+import org.cabbage.crawler.reaper.exception.ReaperException;
+import org.cabbage.crawler.reaper.worker.config.Configure;
 import org.cabbage.crawler.reaper.worker.exception.ReaperWorkerException;
+import org.cabbage.crawler.reaper.worker.main.ReaperWorker;
+import org.cabbage.crawler.reaper.worker.thread.RequestTaskThread;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
 
 public class ManagerHandle {
+
+	private static final Log LOGGER = LogFactory.getLog(ManagerHandle.class);
 
 	protected final Map<String, WorkerHandle> runTaskList = new ConcurrentHashMap<String, WorkerHandle>();
 
@@ -32,24 +45,23 @@ public class ManagerHandle {
 		for (; it.hasNext();) {
 			try {
 				String id = (String) it.next();
-				SpiderTask task = (SpiderTask) runTaskList.get(id).getTask();
+				ReaperTask task = (ReaperTask) runTaskList.get(id).getTask();
 				AbstractApplicationHandle handle = runTaskList.get(id);
 
 				if (null == handle) {
-					logger.warn("AbstractApplicationHandle is null!");
+					LOGGER.warn("AbstractApplicationHandle is null!");
 					continue;
 				}
 				// 如果任务状态是停止、错误或者不再运行，则从任务表中清除，不用心跳
 				if (handle.getWorkerState() == com.fh.netpf.common.taskmgr.TaskBase.FINISH
 						|| handle.getWorkerState() == com.fh.netpf.common.taskmgr.TaskBase.STOP
 						|| handle.getWorkerState() == com.fh.netpf.common.taskmgr.TaskBase.DISABLE) {
-					logger.info("task " + task.getName() + " finished.");
+					LOGGER.info("task " + task.getName() + " finished.");
 					it.remove();
 					task.setLastWorkTime(new Date());
 					AppContext.getAllLastActiveTimeMap().remove(task.getId());
 					runTaskList.remove(id);
-					logger.info("freeTaskFromDB(" + task.getId() + "," + handle
-							+ ")");
+					LOGGER.info("freeTaskFromDB(" + task.getId() + "," + handle + ")");
 					freeTaskFromDB(task.getId() + "", handle);
 					continue;
 				} else {
@@ -57,26 +69,24 @@ public class ManagerHandle {
 					CrawlerConfigure conf = (CrawlerConfigure) configure;
 					// 利用RMI接口实现心跳
 					checkTaskHeartBeatRMI(task, conf.getMaxIdleTime(), true,
-							AppContext.getLastActiveTimeMap(String.valueOf(task
-									.getId())));
+							AppContext.getLastActiveTimeMap(String.valueOf(task.getId())));
 				}
 			} catch (Exception e) {
-				logger.error("!!!!!!!!!!!!!!!!!!!!!! checkAllTaskState error!",
-						e);
+				LOGGER.error("!!!!!!!!!!!!!!!!!!!!!! checkAllTaskState error!", e);
 			}
 		}
 	}
 
 	public boolean runTask(TaskBase task) throws ReaperWorkerException {
-		if (task instanceof SpiderTask) {
-			SpiderTask t = (SpiderTask) task;
+		if (task instanceof ReaperTask) {
+			ReaperTask t = (ReaperTask) task;
 			String domain = "";
 			if (null != t.getUrl()) {
 				domain = NetUtil.getDomain(t.getUrl().trim());
 			}
 			return runNewsCrawlerTask(t);
 		} else {
-			logger.fatal("Task is not SpiderTask!");
+			LOGGER.fatal("Task is not ReaperTask!");
 			return false;
 		}
 	}
@@ -90,10 +100,9 @@ public class ManagerHandle {
 	 * @throws ApplicationException
 	 *             运行出现的异常
 	 */
-	protected boolean runNewsCrawlerTask(SpiderTask task)
-			throws ReaperWorkerException {
+	protected boolean runNewsCrawlerTask(ReaperTask task) throws ReaperWorkerException {
 		if (runTaskList.containsKey(task.getId() + "")) {
-			logger.warn("Task [" + task.getName() + "] has been run.");
+			LOGGER.warn("Task [" + task.getName() + "] has been run.");
 			return false;
 		} else {
 			AppContext.setLastActiveTimeMap(task.getId() + "", new Date());
@@ -107,50 +116,55 @@ public class ManagerHandle {
 		}
 	}
 
-
 	public Map<String, AbstractApplicationHandle> getTaskList() {
 		return runTaskList;
 	}
 
-	public List<SpiderTask> requestTask(int number) {
-		logger.info("   RequestTask begin...");
-		List<SpiderTask> tasks = null;
-		String request = ((CrawlerConfigure) this.configure)
-				.getRequestTaskAddress();
-		if (null == request || request.trim().length() == 0) {
-			logger
-					.error("Check netpf-crawler.xml ,requestTaskAddress is null!");
+	public List<ReaperTask> getTask(int number) throws ReaperException {
+		LOGGER.info("getTask begin...");
+		List<ReaperTask> tasks = null;
+		String mqHost = Configure.getInstance(false).getProperty("mq_host");
+		Integer mqPort = Configure.getInstance(false).getPropertyInteger("mq_port");
+		String mqUsername = Configure.getInstance(false).getProperty("mq_username");
+		String mqPassword = Configure.getInstance(false).getProperty("mq_password");
+		String mqWaittingQueueName = Configure.getInstance(false).getProperty("mq_q_waitting");
+
+		if (null == mqHost || mqHost.trim().length() == 0 || null == mqPort || mqPort < 0 || null == mqUsername
+				|| mqUsername.trim().length() == 0 || null == mqPassword || mqPassword.trim().length() == 0
+				|| null == mqWaittingQueueName || mqWaittingQueueName.trim().length() == 0) {
+			LOGGER.error("Check configure file,MQ configures are invalid!");
 			return null;
 		} else {
-			logger.info(request);
+			LOGGER.info("MQ configures for get ReaperTask[" + mqHost + ":" + mqPort + "/" + mqWaittingQueueName + "{"
+					+ mqUsername + "/" + mqPassword + "}]");
 		}
-		request = request.trim();
-		String hostName = ((CrawlerConfigure) this.configure).getDevice();
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("hostName", hostName);
-		params.put("num", number + "");
-		params.put("module", module);
-		String response = null;
+		String hostName = ReaperWorker.getDevice();
+
+		ConnectionFactory factory = new ConnectionFactory();
+		factory.setHost("192.168.80.101");
+		factory.setPort(5672);
+		factory.setUsername("admin");
+		factory.setPassword("123456");
+
+		Connection connection = null;
+		Channel channel = null;
+
 		try {
-			response = HttpQuery.post(request, params);
-			tasks = paser(response);
-		} catch (SocketException e1) {
-			logger.error("", e1);
-			if (null != e1.getMessage()
-					&& (e1.getMessage().trim().equals("Too many open files") || e1
-							.getMessage().trim().equals("打开的文件过多"))) {
-				URLDetectorWorkerManager.tooManyOpenFileCount();
-			}
+			connection = factory.newConnection();
+			channel = connection.createChannel();
 		} catch (IOException e) {
-			logger.error(e);
+			e.printStackTrace();
+		} catch (TimeoutException e) {
+			e.printStackTrace();
 		}
-		logger.info("   RequestTask end!!!!!");
+
+		LOGGER.info("getTask end!");
 		return tasks;
 	}
 
 	@SuppressWarnings("unchecked")
-	private List<SpiderTask> paser(String response) {
-		List<SpiderTask> tasks = null;
+	private List<ReaperTask> paser(String response) {
+		List<ReaperTask> tasks = null;
 		if (null == response || response.trim().length() == 0) {
 			return null;
 		}
@@ -161,19 +175,18 @@ public class ManagerHandle {
 		try {
 			result = gsonBuilder.fromJson(response, BaseResult.class);
 		} catch (Exception e) {
-			logger.error("Request task error!", e);
+			LOGGER.error("Request task error!", e);
 		}
 		if (null != result) {
 			if (result.isSuccess()) {
 				msg = result.getMessage();
 				if (null != msg && msg.trim().length() > 0) {
 					Gson gson = new Gson();
-					tasks = gson.fromJson(msg,
-							new TypeToken<List<SpiderTask>>() {
-							}.getType());
+					tasks = gson.fromJson(msg, new TypeToken<List<ReaperTask>>() {
+					}.getType());
 				}
 			} else {
-				logger.error("Request task error!" + result.getMessage());
+				LOGGER.error("Request task error!" + result.getMessage());
 			}
 		}
 		return tasks;
@@ -183,14 +196,12 @@ public class ManagerHandle {
 		if (null == stopTaskList || stopTaskList.size() == 0) {
 			return;
 		} else {
-			logger.info("stopTaskList.size[" + stopTaskList.size() + "]");
+			LOGGER.info("stopTaskList.size[" + stopTaskList.size() + "]");
 
 		}
-		String response = ((CrawlerConfigure) this.configure)
-				.getResponseTaskAddress();
+		String response = ((CrawlerConfigure) this.configure).getResponseTaskAddress();
 		if (null == response || response.trim().length() == 0) {
-			logger
-					.error("Check netpf-crawler.xml ,responseTaskAddress is null!");
+			LOGGER.error("Check netpf-crawler.xml ,responseTaskAddress is null!");
 			return;
 		}
 		String hostName = ((CrawlerConfigure) this.configure).getDevice();
@@ -213,8 +224,7 @@ public class ManagerHandle {
 				stopTaskList.remove(id);
 				continue;
 			}
-			ResponseObject ro = AppContext
-					.getResponseObject(Long.parseLong(id));
+			ResponseObject ro = AppContext.getResponseObject(Long.parseLong(id));
 			if (null == ro) {
 				ro = new ResponseObject();
 				ro.setID(Long.parseLong(id));
@@ -227,15 +237,14 @@ public class ManagerHandle {
 			if (null != handle) {
 				TaskBase task = handle.getTask();
 				if (null != task) {
-					SpiderTask t1 = (SpiderTask) task;
+					ReaperTask t1 = (ReaperTask) task;
 					if (null != t1) {
 						url1 = t1.getUrl();
 						if (null != url1) {
 							set2.add(url1);
 						}
-						SpiderTask t2 = AppContext.getTask(t1.getUrl());
-						if (null != t2 && null != t2.getServerExclude()
-								&& t2.getServerExclude().trim().length() > 0) {
+						ReaperTask t2 = AppContext.getTask(t1.getUrl());
+						if (null != t2 && null != t2.getServerExclude() && t2.getServerExclude().trim().length() > 0) {
 							ro.setServerExclude(t2.getServerExclude().trim());
 							url2 = t2.getUrl();
 							if (null != url2) {
@@ -244,16 +253,14 @@ public class ManagerHandle {
 						}
 					}
 				} else {
-					logger.error("task[" + id + "] handle.getTask() is null");
+					LOGGER.error("task[" + id + "] handle.getTask() is null");
 				}
 			}
 			lr.add(ro);
 			set.add(id);
 		}
-		logger.info("scan stopTaskList is finished![" + lr.size() + "] "
-				+ "stopTaskList.size[" + stopTaskList.size() + "] "
-				+ "set.size[" + set.size() + "] " + "set2.size[" + set2.size()
-				+ "] ");
+		LOGGER.info("scan stopTaskList is finished![" + lr.size() + "] " + "stopTaskList.size[" + stopTaskList.size()
+				+ "] " + "set.size[" + set.size() + "] " + "set2.size[" + set2.size() + "] ");
 		if (lr.size() > 0) {
 			Map<String, Object> params = new HashMap<String, Object>();
 			List<Json> lj = new ArrayList<Json>();
@@ -266,37 +273,34 @@ public class ManagerHandle {
 			params.put("msg", json.toString());
 			params.put("hostName", hostName);
 			try {
-				logger.info("Response Api begin:" + json.toString());
+				LOGGER.info("Response Api begin:" + json.toString());
 				response = HttpQuery1.post(response, params);
-				logger.info("Response:" + response);
-				logger.info("Response Api successed!");
+				LOGGER.info("Response:" + response);
+				LOGGER.info("Response Api successed!");
 
 				for (String id : set) {
 					stopTaskList.remove(id);
-					logger.info("stopTaskList.remove(" + id + ")");
+					LOGGER.info("stopTaskList.remove(" + id + ")");
 					AppContext.removeTaskCheckTime(id);
 				}
 				for (String url : set2) {
-					SpiderTask task = new SpiderTask();
+					ReaperTask task = new ReaperTask();
 					task.setUrl(url);
 					AppContext.removeTask(task);
 				}
 			} catch (SocketException e1) {
-				logger.error("", e1);
-				if (null != e1.getMessage()
-						&& (e1.getMessage().trim()
-								.equals("Too many open files") || e1
-								.getMessage().trim().equals("打开的文件过多"))) {
+				LOGGER.error("", e1);
+				if (null != e1.getMessage() && (e1.getMessage().trim().equals("Too many open files")
+						|| e1.getMessage().trim().equals("打开的文件过多"))) {
 					URLDetectorWorkerManager.tooManyOpenFileCount();
 				}
 			} catch (IOException e) {
-				logger.error(e);
+				LOGGER.error(e);
 			} catch (Exception e) {
-				logger.error(e);
+				LOGGER.error(e);
 			}
 		}
-		logger.info("Response tasks is finished![" + lr.size() + "]");
+		LOGGER.info("Response tasks is finished![" + lr.size() + "]");
 	}
-
 
 }

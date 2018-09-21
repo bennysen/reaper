@@ -18,8 +18,16 @@
 		<value>123456</value>
 	</property>
 	<property>
-		<name>mq_q_ori</name>
-		<value>ori</value>
+		<name>mq_q_waitting</name>
+		<value>waitting4process</value>
+	</property>
+	<property>
+		<name>mq_q_processing</name>
+		<value>processing</value>
+	</property>
+	<property>
+		<name>mq_q_finished</name>
+		<value>finished</value>
 	</property>
 	<!-- reaper coordinator configure -->
 	<property>

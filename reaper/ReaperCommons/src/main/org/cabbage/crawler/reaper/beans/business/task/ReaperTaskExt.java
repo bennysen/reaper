@@ -1,26 +1,21 @@
-package org.cabbage.crawler.reaper.commons.object.business.task;
+package org.cabbage.crawler.reaper.beans.business.task;
 
 import java.util.Random;
 
 import org.dom4j.Document;
 
 /**
- * Reaper任务定义
+ * Reaper任务扩展定义
  * 
  * @author benny
  *
  */
-public class ReaperTask {
+public class ReaperTaskExt extends ReaperTask{
 
-	// 任务ID
-	private long ID;
 
 	// 处理流水ID
 	private long processID = System.currentTimeMillis() * 1000 + (new Random().nextInt(10) * 100)
 			+ (new Random().nextInt(10) * 10) + (new Random().nextInt(10));
-
-	// 任务URL
-	private String URL;
 
 	// 任务前置URL
 	private String preURL;
@@ -34,37 +29,6 @@ public class ReaperTask {
 	// 任务URL获取到的网页Document
 	private Document document;
 
-	/**
-	 * 获取任务ID
-	 * @return 任务ID
-	 */
-	public long getID() {
-		return ID;
-	}
-
-	/**
-	 * 设置任务ID
-	 * @param ID 任务ID
-	 */
-	public void setID(long ID) {
-		this.ID = ID;
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	public String getURL() {
-		return URL;
-	}
-
-	/**
-	 * 
-	 * @param URL
-	 */
-	public void setURL(String URL) {
-		this.URL = URL;
-	}
 
 	/**
 	 * 
@@ -143,6 +107,6 @@ public class ReaperTask {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		System.out.println(new ReaperTask().processID);
+		System.out.println(new ReaperTaskExt().processID);
 	}
 }

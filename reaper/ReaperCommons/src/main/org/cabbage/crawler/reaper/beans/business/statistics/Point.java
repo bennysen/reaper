@@ -1,4 +1,4 @@
-package org.cabbage.crawler.reaper.commons.object.business.statistics;
+package org.cabbage.crawler.reaper.beans.business.statistics;
 
 import java.util.Collection;
 import java.util.HashSet;

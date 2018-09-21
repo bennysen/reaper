@@ -1,4 +1,4 @@
-package org.cabbage.crawler.reaper.commons.object.persistent.cassandra;
+package org.cabbage.crawler.reaper.beans.persistent.cassandra;
 
 public class PointOut {
 

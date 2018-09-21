@@ -4,11 +4,12 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.cabbage.crawler.reaper.commons.object.business.task.ReaperTask;
 import org.cabbage.crawler.reaper.worker.main.ReaperWorker;
 
 
 /**
- * 任务管理器重任务表中提取任务
+ * 任务管理器从任务队列中提取任务
  * 
  * 
  */
@@ -23,12 +24,9 @@ public class RequestTaskThread extends Thread {
 	 *            managerHandles
 	 * 
 	 */
-	public RequestTaskThread() {
+	public RequestTaskThread(int maxTaskCount) {
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public void run() {
 		Integer taskCount = null;
 		int selectTaskWait = 0;
@@ -57,7 +55,7 @@ public class RequestTaskThread extends Thread {
 				if (currentTotalTaskSize >= maxTaskCount) {
 					LOGGER.warn("采集任务已经达到最大阀值，如需增加请修改netpf-crawler.xml配置。");
 					try {
-						Thread.sleep(selectTaskWait * 1L);
+						Thread.sleep(selectTaskWait);
 					} catch (Exception e) {
 						LOGGER.error("", e);
 					}
@@ -69,10 +67,9 @@ public class RequestTaskThread extends Thread {
 					if (free == 0 || free < 0) {
 						break;
 					}
-					currentTotalTaskSize = currentTotalTaskSize + free;
-
 					LOGGER.info("本次获取任务数量【" + free + "】。");
-					List<?> ts = null;
+					
+					List<ReaperTask> ts = null;
 					if (null == ts || ts.size() == 0) {
 					} else {
 						for (int i = 0; i < ts.size(); i++) {

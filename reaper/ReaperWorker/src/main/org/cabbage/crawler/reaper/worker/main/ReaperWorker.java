@@ -2,6 +2,8 @@ package org.cabbage.crawler.reaper.worker.main;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,18 +21,23 @@ import org.cabbage.crawler.reaper.worker.utils.ReduceUtils;
 public class ReaperWorker {
 
 	private static final Log LOGGER = LogFactory.getLog(ReaperWorker.class);
-	
+
 	private static int tooManyOpenFileCount = 0;
 
+	private static String DEVICE = null;
+
+	public static String getDevice() {
+		return DEVICE;
+	}
 
 	private static void trackerTask() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	private static void responseStopTask() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	private static void requestRunTask() {
@@ -44,12 +51,12 @@ public class ReaperWorker {
 
 	private static void checkAllTaskState() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	private static void resetTask() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	private static void mapdb() {
@@ -58,10 +65,18 @@ public class ReaperWorker {
 
 	private static void initialize() {
 		// TODO Auto-generated method stub
-		
+		initializeDevice();
 	}
-	
-	
+
+	private static void initializeDevice() {
+		try {
+			DEVICE = (InetAddress.getLocalHost()).getHostName();
+		} catch (UnknownHostException e) {
+			DEVICE = "UNKNOWN-HOST";
+			LOGGER.warn("InetAddress get host name error!", e);
+		}
+	}
+
 	public synchronized static boolean isTooManyOpenFile() {
 		if (tooManyOpenFileCount > 1000) {
 			return true;
@@ -69,21 +84,18 @@ public class ReaperWorker {
 			return false;
 		}
 	}
-	
+
 	public synchronized static int getTooManyOpenFileCount() {
 		return tooManyOpenFileCount;
 	}
-	
+
 	public synchronized static void terminate(String msg) {
 		try {
 			boolean is = FileUtils.isExist("terminateLog.log");
 			if (is) {
-				append("terminateLog.log", DateUtils.getCurrDateTime() + " : "
-						+ msg + "\r\n");
+				append("terminateLog.log", DateUtils.getCurrDateTime() + " : " + msg + "\r\n");
 			} else {
-				FileUtils.writeTxtFile("terminateLog.log", DateUtils
-						.getCurrDateTime()
-						+ " : " + msg + "\r\n");
+				FileUtils.writeTxtFile("terminateLog.log", DateUtils.getCurrDateTime() + " : " + msg + "\r\n");
 			}
 		} catch (IOException e) {
 			LOGGER.error(e);
@@ -92,9 +104,8 @@ public class ReaperWorker {
 			System.exit(-1);
 		}
 	}
-	
-	private static void append(String fileName, String content)
-			throws IOException {
+
+	private static void append(String fileName, String content) throws IOException {
 		FileWriter writer = null;
 		try {
 			writer = new FileWriter(fileName, true);
@@ -109,19 +120,17 @@ public class ReaperWorker {
 			}
 		}
 	}
-	
-	
+
 	public synchronized static int getCurrentTaskSize() {
 		int count = 0;
 		return count;
 	}
-	
+
 	public synchronized static int getCurrentStopTaskSize() {
 		int count = 0;
 		return count;
 	}
-	
-	
+
 	public static void main(String[] args) {
 		// 1.1初始化配置文件，数据库连接，任务管理器
 		initialize();
