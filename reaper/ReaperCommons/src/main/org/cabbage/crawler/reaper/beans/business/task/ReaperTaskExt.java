@@ -13,6 +13,11 @@ import org.dom4j.Document;
 public class ReaperTaskExt extends ReaperTask{
 
 
+	/**
+	 * serialVersionUID
+	 */
+	private static final long serialVersionUID = 3852852604771656960L;
+
 	// 处理流水ID
 	private long processID = System.currentTimeMillis() * 1000 + (new Random().nextInt(10) * 100)
 			+ (new Random().nextInt(10) * 10) + (new Random().nextInt(10));

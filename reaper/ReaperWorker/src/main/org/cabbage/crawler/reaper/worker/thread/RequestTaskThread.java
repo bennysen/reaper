@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.cabbage.crawler.reaper.commons.object.business.task.ReaperTask;
+import org.cabbage.crawler.reaper.beans.business.task.ReaperTask;
 import org.cabbage.crawler.reaper.worker.main.ReaperWorker;
 
 
