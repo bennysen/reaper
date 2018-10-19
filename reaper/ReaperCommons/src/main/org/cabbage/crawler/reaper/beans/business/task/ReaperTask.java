@@ -1,7 +1,9 @@
 package org.cabbage.crawler.reaper.beans.business.task;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.util.Random;
+
+import org.dom4j.Document;
 
 /**
  * Reaper任务定义
@@ -29,7 +31,24 @@ public class ReaperTask implements Serializable{
 	// 任务URL
 	private String URL;
 
+	// 处理流水ID
+		private long processID = System.currentTimeMillis() * 1000 + (new Random().nextInt(10) * 100)
+				+ (new Random().nextInt(10) * 10) + (new Random().nextInt(10));
 
+		// 任务前置URL
+		private String preURL;
+
+		// 状态
+		private int status;
+
+		// http状态值
+		private int httpStatus;
+
+		// 执行任务的机器名
+		private String host;
+
+		// 任务URL获取到的网页Document
+		private Document document;
 
 	/**
 	 * 获取任务ID
@@ -63,17 +82,97 @@ public class ReaperTask implements Serializable{
 		this.URL = URL;
 	}
 
+	public String getHost() {
+		return host;
+	}
 
+	public void setHost(String host) {
+		this.host = host;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public String getPreURL() {
+		return preURL;
+	}
+
+	/**
+	 * 
+	 * @param preURL
+	 */
+	public void setPreURL(String preURL) {
+		this.preURL = preURL;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public int getStatus() {
+		return status;
+	}
+
+	/**
+	 * 
+	 * @param status
+	 */
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public int getHttpStatus() {
+		return httpStatus;
+	}
+
+	/**
+	 * 
+	 * @param httpStatus
+	 */
+	public void setHttpStatus(int httpStatus) {
+		this.httpStatus = httpStatus;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public Document getDocument() {
+		return document;
+	}
+
+	/**
+	 * 
+	 * @param document
+	 */
+	public void setDocument(Document document) {
+		this.document = document;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public long getProcessID() {
+		return processID;
+	}
+
+
+	public void setLastWorkTime(Long timestamp) {
+		// TODO Auto-generated method stub
+		
+	}
+	
 	/**
 	 * 
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		System.out.println(new ReaperTask());
-	}
-
-	public void setLastWorkTime(Long timestamp) {
-		// TODO Auto-generated method stub
-		
 	}
 }

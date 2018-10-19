@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.cabbage.crawler.reaper.beans.business.task.ReaperTask;
+import org.cabbage.crawler.reaper.worker.handle.ManagerHandle;
 import org.cabbage.crawler.reaper.worker.main.ReaperWorker;
 
 
@@ -24,7 +25,7 @@ public class RequestTaskThread extends Thread {
 	 *            managerHandles
 	 * 
 	 */
-	public RequestTaskThread(int maxTaskCount) {
+	public RequestTaskThread() {
 	}
 
 	public void run() {
@@ -69,11 +70,19 @@ public class RequestTaskThread extends Thread {
 					}
 					LOGGER.info("本次获取任务数量【" + free + "】。");
 					
+					ManagerHandle handle = new ManagerHandle();
+					
+					//TODO get task list
 					List<ReaperTask> ts = null;
+					
+					
+					
+					
+					
 					if (null == ts || ts.size() == 0) {
 					} else {
 						for (int i = 0; i < ts.size(); i++) {
-							Object task = ts.get(i);
+							ReaperTask task = ts.get(i);
 							if (null != task) {
 								LOGGER.info("run task [" + i + "],");
 								try {

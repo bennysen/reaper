@@ -109,7 +109,7 @@ public class ManagerHandle {
 	 * @throws Exception
 	 *             停止采集任务出错或者任务不存在
 	 */
-	private boolean stopTask(ReaperTask task) {
+	public boolean stopTask(ReaperTask task) {
 		if (null == task || null == task.getID()) {
 			return false;
 		}

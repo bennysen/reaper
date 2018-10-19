@@ -2,6 +2,7 @@ package org.cabbage.commons.utils.bean;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -15,7 +16,7 @@ import java.util.zip.GZIPOutputStream;
  * 
  */
 public final class SerializableUtils {
-	public static byte[] writeObject(Serializable object) throws Exception {
+	public static byte[] writeObject(Serializable object) throws IOException {
 		byte[] data = null;
 		ByteArrayOutputStream bos = null;
 		GZIPOutputStream gzout = null;
@@ -29,8 +30,8 @@ public final class SerializableUtils {
 			gzout.finish();
 
 			data = bos.toByteArray();
-		} catch (Exception e) {
-			throw new Exception(e);
+		} catch (IOException e) {
+			throw e;
 		} finally {
 			if (null != out) {
 				out.close();
@@ -45,7 +46,7 @@ public final class SerializableUtils {
 		return data;
 	}
 
-	public static Serializable readObject(byte[] data) throws Exception {
+	public static Serializable readObject(byte[] data) throws IOException, ClassNotFoundException {
 		Serializable object = null;
 		ByteArrayInputStream bis = null;
 		GZIPInputStream gzin = null;
@@ -55,8 +56,8 @@ public final class SerializableUtils {
 			gzin = new GZIPInputStream(bis);
 			in = new ObjectInputStream(gzin);
 			object = (Serializable) in.readObject();
-		} catch (Exception e) {
-			throw new Exception(e);
+		} catch (IOException e) {
+			throw e;
 		} finally {
 			if (null != in) {
 				in.close();
