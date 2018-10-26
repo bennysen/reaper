@@ -39,7 +39,7 @@ public class ReaperTask implements Serializable{
 		private String preURL;
 
 		// 状态
-		private int status;
+		private Long status;
 
 		// http状态值
 		private int httpStatus;
@@ -110,7 +110,7 @@ public class ReaperTask implements Serializable{
 	 * 
 	 * @return
 	 */
-	public int getStatus() {
+	public Long getStatus() {
 		return status;
 	}
 
@@ -118,7 +118,7 @@ public class ReaperTask implements Serializable{
 	 * 
 	 * @param status
 	 */
-	public void setStatus(int status) {
+	public void setStatus(Long status) {
 		this.status = status;
 	}
 

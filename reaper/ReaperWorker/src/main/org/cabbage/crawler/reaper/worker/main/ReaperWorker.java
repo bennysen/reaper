@@ -9,6 +9,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.cabbage.commons.utils.DateUtils;
 import org.cabbage.commons.utils.file.FileUtils;
+import org.cabbage.crawler.reaper.exception.ReaperException;
+import org.cabbage.crawler.reaper.worker.config.Configure;
 import org.cabbage.crawler.reaper.worker.thread.RequestTaskThread;
 import org.cabbage.crawler.reaper.worker.utils.ReduceUtils;
 
@@ -41,8 +43,18 @@ public class ReaperWorker {
 	}
 
 	private static void requestRunTask() {
+		Integer maxTaskCount = 16;
 		try {
-			Thread thread = new RequestTaskThread();
+			maxTaskCount = Configure.getInstance(false).getPropertyInteger("maxTaskCount");
+			if(null==maxTaskCount||maxTaskCount<1) {
+				maxTaskCount = 16;
+			}
+		} catch (ReaperException e) {
+			LOGGER.error("Please check configure file,maxTaskCount is invalid!");
+		}
+
+		try {
+			Thread thread = new RequestTaskThread(maxTaskCount);
 			thread.start();
 		} catch (Exception e1) {
 			LOGGER.error("", e1);

@@ -44,7 +44,6 @@ public class RabbitMQUtils {
 			LOGGER.info("MQ configures for get ReaperTask[" + mqHost + ":" + mqPort + "/" + mqWaittingQueueName + "{"
 					+ mqUsername + "/" + mqPassword + "}]");
 		}
-
 		ConnectionFactory factory = null;
 		Connection connection = null;
 		Connection connection2 = null;
@@ -60,7 +59,7 @@ public class RabbitMQUtils {
 
 			connection = factory.newConnection();
 			channel4get = connection.createChannel();
-			
+
 			connection2 = factory.newConnection();
 			channel4send = connection2.createChannel();
 			////////////////////////////////////////////////////
@@ -83,8 +82,8 @@ public class RabbitMQUtils {
 					task = (ReaperTask) SerializableUtils.readObject(response.getBody());
 					if (null == task || null == task.getID() || null == task.getURL()
 							|| task.getURL().trim().length() == 0) {
-
 					} else {
+						task.setHost(ReaperWorker.getDevice());
 						tasks.add(task);
 					}
 				} catch (Exception e) {
@@ -92,9 +91,7 @@ public class RabbitMQUtils {
 				}
 				// send msg to mq.processingQueue
 				if (null == task) {
-
 				} else {
-					task.setHost(ReaperWorker.getDevice());
 					task.setLastWorkTime(System.currentTimeMillis() / 1000);
 					channel4send.basicPublish("", mqProcessingQueueName, MessageProperties.PERSISTENT_TEXT_PLAIN,
 							SerializableUtils.writeObject(task));
@@ -120,7 +117,7 @@ public class RabbitMQUtils {
 		return tasks;
 	}
 
-	public static synchronized void sendTask(List<ReaperTask> tasks)
+	public static synchronized void sendTask(String queue, List<ReaperTask> tasks)
 			throws IOException, ReaperException, TimeoutException {
 		if (null == tasks || tasks.size() == 0) {
 			return;
@@ -129,15 +126,14 @@ public class RabbitMQUtils {
 		Integer mqPort = Configure.getInstance(false).getPropertyInteger("mq_port");
 		String mqUsername = Configure.getInstance(false).getProperty("mq_username");
 		String mqPassword = Configure.getInstance(false).getProperty("mq_password");
-		String mqWaittingQueueName = Configure.getInstance(false).getProperty("mq_q_waitting");
 
 		if (null == mqHost || mqHost.trim().length() == 0 || null == mqPort || mqPort < 0 || null == mqUsername
 				|| mqUsername.trim().length() == 0 || null == mqPassword || mqPassword.trim().length() == 0
-				|| null == mqWaittingQueueName || mqWaittingQueueName.trim().length() == 0) {
+				|| null == queue || queue.trim().length() == 0) {
 			LOGGER.error("Check configure file,MQ configures are invalid!");
 		} else {
-			LOGGER.info("MQ configures for get ReaperTask[" + mqHost + ":" + mqPort + "/" + mqWaittingQueueName + "{"
-					+ mqUsername + "/" + mqPassword + "}]");
+			LOGGER.info("MQ configures for get ReaperTask[" + mqHost + ":" + mqPort + "/" + queue + "{" + mqUsername
+					+ "/" + mqPassword + "}]");
 		}
 
 		ConnectionFactory factory = null;
@@ -156,7 +152,7 @@ public class RabbitMQUtils {
 			// 是否持久的;耐用的，耐久的;长期的
 			// 声明队列为持久类型的,声明的时候记得把队列的名字改一下,因为rmq不允许对一个已经存在的队列重新定义
 			boolean durable = true;
-			channel.queueDeclare(mqWaittingQueueName, durable, false, false, null);
+			channel.queueDeclare(queue, durable, false, false, null);
 			/**
 			 * 使用basicQos方法和 prefetchCount = 1设置。 这告诉RabbitMQ一次不要向消费者发送多个消息。
 			 * 或者换句话说，不要向消费者发送新消息，直到它处理并确认了前一个消息。 相反，它会将其分派给不是仍然忙碌的下一个消费者。
@@ -172,7 +168,7 @@ public class RabbitMQUtils {
 				}
 
 				// MessageProperties.PERSISTENT_TEXT_PLAIN 配合durable=true使用
-				channel.basicPublish("", mqWaittingQueueName, MessageProperties.PERSISTENT_TEXT_PLAIN,
+				channel.basicPublish("", queue, MessageProperties.PERSISTENT_TEXT_PLAIN,
 						SerializableUtils.writeObject(task));
 				LOGGER.info("Send [" + task.getID() + ":" + task.getURL() + "]");
 			}
@@ -194,7 +190,7 @@ public class RabbitMQUtils {
 		task.setLastWorkTime(System.currentTimeMillis() / 1000);
 		tasks.add(task);
 
-		RabbitMQUtils.sendTask(tasks);
+		RabbitMQUtils.sendTask("waitting4process", tasks);
 		tasks = RabbitMQUtils.getTask(10);
 
 		if (null == tasks || tasks.size() == 0) {
