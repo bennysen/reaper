@@ -21,6 +21,18 @@ import org.omg.CORBA.portable.ApplicationException;
 
 public class ManagerHandle {
 
+	private static ManagerHandle INSTANCE = null;
+
+	private ManagerHandle() {
+	}
+
+	public synchronized static ManagerHandle getInstance() {
+		if(null==INSTANCE) {
+			INSTANCE = new ManagerHandle();
+		}
+		return INSTANCE;
+	}
+
 	private static final Log LOGGER = LogFactory.getLog(ManagerHandle.class);
 
 	protected final Map<Long, WorkerHandle> runTaskMap = new ConcurrentHashMap<Long, WorkerHandle>();
@@ -126,8 +138,7 @@ public class ManagerHandle {
 			return false;
 		} else {
 			AppContext.setLastActiveTimeMap(task.getID(), new Date());
-			WorkerHandle workHandle = new WorkerHandle();
-			workHandle.setTask(task);
+			WorkerHandle workHandle = new WorkerHandle(task);
 			runTaskMap.put(task.getID(), workHandle);
 			workHandle.runTask();
 			return true;

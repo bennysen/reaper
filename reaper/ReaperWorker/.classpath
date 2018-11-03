@@ -17,9 +17,7 @@
 	<classpathentry kind="lib" path="lib/dom4j-1.6.1.jar"/>
 	<classpathentry kind="lib" path="lib/jericho-html-2.6.2.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang-2.3.jar"/>
-	<classpathentry kind="lib" path="lib/cabbage-commons-utils.jar"/>
 	<classpathentry kind="lib" path="lib/jaxen-1.1-beta-6.jar"/>
-	<classpathentry kind="lib" path="lib/cabbage-commons-webTemplate.jar"/>
 	<classpathentry kind="lib" path="lib/gson-2.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/mapdb-1.0.8.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CommonUtils"/>
@@ -28,5 +26,8 @@
 	<classpathentry kind="lib" path="lib/amqp-client-4.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.7.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-simple-1.7.22.jar"/>
+	<classpathentry kind="lib" path="lib/cassandra-driver-core-3.0.1-shaded.jar"/>
+	<classpathentry kind="lib" path="lib/guava-18.0.jar"/>
+	<classpathentry kind="lib" path="lib/metrics-core-3.1.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

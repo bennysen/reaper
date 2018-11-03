@@ -24,18 +24,15 @@ public class RequestTaskThread extends Thread {
 	int selectTaskWait = 10000;
 
 	/**
-	 * <默认构造函数>
 	 * 
-	 * @param managerHandles
-	 *            managerHandles
-	 * 
+	 * @param maxTaskCount
 	 */
 	public RequestTaskThread(int maxTaskCount) {
 		this.maxTaskCount = maxTaskCount;
 		try {
 			Integer selectTaskWait = Configure.getInstance(false).getPropertyInteger("selectTaskWait");
 			if (null == selectTaskWait || selectTaskWait < 10000) {
-
+				// if selectTaskWait < 10000 then use default value 10000
 			} else {
 				this.selectTaskWait = selectTaskWait;
 			}
@@ -46,10 +43,6 @@ public class RequestTaskThread extends Thread {
 	public void run() {
 
 		while (true) {
-			if (ReaperWorker.isTooManyOpenFile()) {
-				ReaperWorker.terminate("tooManyOpenFileCount[" + ReaperWorker.getTooManyOpenFileCount() + "]");
-			}
-			LOGGER.warn("tooManyOpenFileCount[" + ReaperWorker.getTooManyOpenFileCount() + "]");
 			try {
 				int currentTotalTaskSize = ReaperWorker.getCurrentTaskSize();
 				int currentStopTaskSize = ReaperWorker.getCurrentStopTaskSize();
@@ -68,13 +61,13 @@ public class RequestTaskThread extends Thread {
 				}
 
 				int free = maxTaskCount - currentTotalTaskSize;
-				// ///////////////////////////////////////////////////////////////////
+				
 				if (free == 0 || free < 0) {
 					break;
 				}
 				LOGGER.info("本次获取任务数量【" + free + "】。");
 
-				ManagerHandle handle = new ManagerHandle();
+				ManagerHandle handle = ManagerHandle.getInstance();
 
 				List<ReaperTask> ts = RabbitMQUtils.getTask(free);
 
@@ -82,7 +75,9 @@ public class RequestTaskThread extends Thread {
 				} else {
 					for (int i = 0; i < ts.size(); i++) {
 						ReaperTask task = ts.get(i);
-						if (null != task) {
+						if (null == task||task.isInvalid()) {
+							LOGGER.warn("No task to run[" + i + "]");
+						} else {
 							LOGGER.info("run task [" + i + "],");
 							try {
 								handle.runTask(task);
@@ -90,8 +85,6 @@ public class RequestTaskThread extends Thread {
 								LOGGER.error(e);
 								handle.stopTask(task);
 							}
-						} else {
-							LOGGER.warn("No task to run[" + i + "]");
 						}
 					}
 				}

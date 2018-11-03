@@ -29,6 +29,27 @@
 		<name>mq_q_finished</name>
 		<value>finished</value>
 	</property>
+	<!-- cassandra configure -->
+	<property>
+		<name>cassandraHost</name>
+		<value>192.168.80.101</value>
+	</property>
+	<property>
+		<name>cassandraPort</name>
+		<value>9042</value>
+	</property>
+		<property>
+		<name>cassandraKeySpace</name>
+		<value>reaper</value>
+	</property>
+		<property>
+		<name>cassandraUsername</name>
+		<value>cassandra</value>
+	</property>
+		<property>
+		<name>cassandraPassword</name>
+		<value>cassandra</value>
+	</property>
 	<!-- reaper coordinator configure -->
 	<property>
 		<name>requestTaskURL</name>
@@ -44,7 +65,7 @@
 	</property>
 	<!-- reaper worker configure -->
 	<property>
-		<name>maxTaskCount</name>
+		<name>filterSuffix</name>
 		<value>100</value>
 	</property>
 	<property>

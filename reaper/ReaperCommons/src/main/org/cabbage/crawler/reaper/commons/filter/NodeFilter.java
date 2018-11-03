@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 后缀过滤器
+ * Node过滤器
  * 
  * @author wkshen
  *

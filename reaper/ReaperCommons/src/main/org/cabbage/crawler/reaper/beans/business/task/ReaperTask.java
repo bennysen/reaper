@@ -3,6 +3,8 @@ package org.cabbage.crawler.reaper.beans.business.task;
 import java.io.Serializable;
 import java.util.Random;
 
+import org.apache.http.HttpHost;
+import org.apache.http.client.CookieStore;
 import org.dom4j.Document;
 
 /**
@@ -11,14 +13,13 @@ import org.dom4j.Document;
  * @author benny
  *
  */
-public class ReaperTask implements Serializable{
+public class ReaperTask implements Serializable {
 
 	/**
 	 * serialVersionUID
 	 */
 	private static final long serialVersionUID = -7399746645141946120L;
-	
-	
+
 	public static final Long INIT = 0l;
 	public static final Long RUNNING = 1l;
 	public static final Long STOP = 2l;
@@ -32,26 +33,33 @@ public class ReaperTask implements Serializable{
 	private String URL;
 
 	// 处理流水ID
-		private long processID = System.currentTimeMillis() * 1000 + (new Random().nextInt(10) * 100)
-				+ (new Random().nextInt(10) * 10) + (new Random().nextInt(10));
+	private long processID = System.currentTimeMillis() * 1000 + (new Random().nextInt(10) * 100)
+			+ (new Random().nextInt(10) * 10) + (new Random().nextInt(10));
 
-		// 任务前置URL
-		private String preURL;
+	// 任务前置URL
+	private String preURL;
 
-		// 状态
-		private Long status;
+	// 状态
+	private Long status;
 
-		// http状态值
-		private int httpStatus;
+	// http状态值
+	private int httpStatus;
 
-		// 执行任务的机器名
-		private String host;
+	// 执行任务的机器名
+	private String host;
 
-		// 任务URL获取到的网页Document
-		private Document document;
+	private String charset = "utf-8";
+
+	private HttpHost proxy;
+
+	private CookieStore cookieStore;
+
+	// 任务URL获取到的网页Document
+	private Document document;
 
 	/**
 	 * 获取任务ID
+	 * 
 	 * @return 任务ID
 	 */
 	public Long getID() {
@@ -60,7 +68,9 @@ public class ReaperTask implements Serializable{
 
 	/**
 	 * 设置任务ID
-	 * @param ID 任务ID
+	 * 
+	 * @param ID
+	 *            任务ID
 	 */
 	public void setID(Long ID) {
 		this.ID = ID;
@@ -95,6 +105,9 @@ public class ReaperTask implements Serializable{
 	 * @return
 	 */
 	public String getPreURL() {
+		if (null == preURL) {
+			return URL;
+		}
 		return preURL;
 	}
 
@@ -162,12 +175,43 @@ public class ReaperTask implements Serializable{
 		return processID;
 	}
 
-
 	public void setLastWorkTime(Long timestamp) {
 		// TODO Auto-generated method stub
-		
+
 	}
-	
+
+	public String getCharset() {
+		return charset;
+	}
+
+	public void setCharset(String charset) {
+		this.charset = charset;
+	}
+
+	public HttpHost getProxy() {
+		return proxy;
+	}
+
+	public void setProxy(HttpHost proxy) {
+		this.proxy = proxy;
+	}
+
+	public CookieStore getCookieStore() {
+		return cookieStore;
+	}
+
+	public void setCookieStore(CookieStore cookieStore) {
+		this.cookieStore = cookieStore;
+	}
+
+	public boolean isInvalid() {
+		boolean isInvalid = false;
+		if (null == this.URL || this.URL.trim().length() == 0) {
+			isInvalid = true;
+		}
+		return isInvalid;
+	}
+
 	/**
 	 * 
 	 * @param args

@@ -2,7 +2,9 @@ package org.cabbage.crawler.reaper.worker.utils;
 
 import java.io.File;
 import java.io.IOError;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentNavigableMap;
 
 import org.apache.commons.logging.Log;
@@ -18,19 +20,18 @@ import org.mapdb.DBMaker;
  *
  */
 public class ReduceUtils {
-	
+
 	private static final Log LOGGER = LogFactory.getLog(ReduceUtils.class);
-	
-	public static DB MAP_DB = null;
+
+	private static DB MAP_DB = null;
 	/**
 	 * <domain,MergeBean>
 	 */
-	public static ConcurrentNavigableMap<String, ReduceBean> MAP = null;
-	
-	public static void mapdb() {
+	private static ConcurrentNavigableMap<String, ReduceBean> MAP = null;
+
+	public static void initMapDB() {
 		try {
-			MAP_DB = DBMaker.newFileDB(new File("reducerDB"))
-					.closeOnJvmShutdown().make();
+			MAP_DB = DBMaker.newFileDB(new File("reducerDB")).closeOnJvmShutdown().make();
 			MAP = MAP_DB.getTreeMap("reducerMap");
 		} catch (Exception e) {
 			LOGGER.error("Load mapdb error!", e);
@@ -40,7 +41,37 @@ public class ReduceUtils {
 			rebuildMapDB();
 		}
 	}
-	
+
+	public synchronized static Set<String> reduce(String domain, Set<String> urls) {
+		if (null == domain || domain.trim().length() == 0 || null == urls || urls.size() == 0) {
+			return null;
+		}
+
+		ReduceBean persistent = MAP.get(domain);
+		if (null == persistent) {
+			persistent = new ReduceBean();
+			persistent.setKey(domain);
+			persistent.setOutLinks(new HashSet<String>());
+		}
+		ReduceBean current = new ReduceBean();
+		current.setKey(domain);
+		current.setOutLinks(urls);
+
+		Set<String> dist = reduce(urls, persistent.getOutLinks());
+		persistent.getOutLinks().addAll(urls);
+		MAP.put(domain, persistent);
+		MAP_DB.commit();
+		return dist;
+
+	}
+
+	private static Set<String> reduce(Set<String> current, Set<String> last) {
+		Set<String> c = new HashSet<String>();
+		c.addAll(current);
+		c.removeAll(last);
+		return c;
+	}
+
 	private static void rebuildMapDB() {
 		try {
 			List<File> fs = FileUtils.listFiles(new File("."));
@@ -59,8 +90,7 @@ public class ReduceUtils {
 					}
 				}
 			}
-			MAP_DB = DBMaker.newFileDB(new File("reducerDB"))
-					.closeOnJvmShutdown().make();
+			MAP_DB = DBMaker.newFileDB(new File("reducerDB")).closeOnJvmShutdown().make();
 			MAP = MAP_DB.getTreeMap("reducerMap");
 		} catch (Exception e1) {
 			LOGGER.error("Rebuild mapdb error!System exit!", e1);

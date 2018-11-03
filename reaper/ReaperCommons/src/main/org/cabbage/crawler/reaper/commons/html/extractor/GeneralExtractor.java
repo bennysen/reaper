@@ -59,6 +59,7 @@ public class GeneralExtractor extends AbstractHtmlExtractor {
 				String url = i.next();
 				DefaultAttribute a = urls.get(url);
 				try {
+					if (null == a.getParent().getText() || a.getParent().getText().trim().length() == 0)
 					System.out.println(url + "    " + a.getParent().getText());
 					// System.out.println(url + " " + new
 					// String(a.getParent().getText().getBytes("ISO-8859-1"), "GB2312"));

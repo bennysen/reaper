@@ -616,7 +616,6 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 					br.close();
 				} catch (IOException e) {
 				}
-				;
 			}
 			if (isr != null) {
 				try {

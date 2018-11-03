@@ -1,5 +1,6 @@
 package org.cabbage.crawler.reaper.commons.filter;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -59,10 +60,17 @@ public class SuffixFilter extends AbstractFilter {
 		VEDIO_SUFFIXS.add(".m4v");
 		VEDIO_SUFFIXS.add(".rmvb");
 		VEDIO_SUFFIXS.add(".rm");
+		VEDIO_SUFFIXS.add(".ra");
 		SCRIPT_SUFFIXS.add(".js");
 		FILE_SUFFIXS.add(".zip");
 		FILE_SUFFIXS.add(".tar");
 		FILE_SUFFIXS.add(".gz");
+		FILE_SUFFIXS.add(".apk");
+		FILE_SUFFIXS.add(".7zip");
+		FILE_SUFFIXS.add(".exe");
+		FILE_SUFFIXS.add(".txt");
+		FILE_SUFFIXS.add(".pdf");
+		FILE_SUFFIXS.add(".tmp");
 		SCRIPT_SUFFIXS.add(".do");
 		AUDIO_SUFFIXS.add(".mp3");
 		AUDIO_SUFFIXS.add(".wma");
@@ -74,6 +82,20 @@ public class SuffixFilter extends AbstractFilter {
 		SUFFIXS.addAll(PIC_SUFFIXS);
 		SUFFIXS.addAll(VEDIO_SUFFIXS);
 		SUFFIXS.addAll(AUDIO_SUFFIXS);
+	}
+
+	public void addSuffix(String suffix) {
+		if (null == suffix || suffix.trim().length() == 0) {
+			return;
+		}
+		SUFFIXS.add(suffix.trim());
+	}
+
+	public void addSuffix(Collection<String> suffixs) {
+		if (null == suffixs) {
+			return;
+		}
+		SUFFIXS.addAll(suffixs);
 	}
 
 	@Override

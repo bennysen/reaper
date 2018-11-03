@@ -25,6 +25,9 @@ public class BlackLinkFilter extends AbstractFilter {
 		this.link2text = link2text;
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public Set<String> filter() {
 		Set<String> result = new HashSet<String>();

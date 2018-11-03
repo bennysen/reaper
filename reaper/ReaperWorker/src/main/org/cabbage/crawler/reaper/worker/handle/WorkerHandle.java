@@ -5,26 +5,30 @@ import org.apache.commons.logging.LogFactory;
 import org.cabbage.crawler.reaper.beans.business.task.ReaperTask;
 import org.cabbage.crawler.reaper.worker.thread.ReaperWorkerThread;
 
+/**
+ * 
+ * @author wkshen
+ *
+ */
 public class WorkerHandle {
 
 	private static final Log LOGGER = LogFactory.getLog(WorkerHandle.class);
 
 	ReaperTask task = null;
 
-	ReaperWorkerThread thread = new ReaperWorkerThread();
+	ReaperWorkerThread thread = null;
+	
+	public WorkerHandle(ReaperTask task) {
+		this.task = task;
+		thread = new ReaperWorkerThread(task);
+	}
 
 	public ReaperTask getTask() {
 		return task;
 	}
 
 	public Long getWorkerState() {
-		Long status = ReaperTask.INIT;
-		if (null == task || null == task.getStatus()) {
-
-		} else {
-			status = task.getStatus();
-		}
-		return status;
+		return thread.getWorkerState();
 	}
 
 	public void stopTask() {
@@ -47,5 +51,9 @@ public class WorkerHandle {
 
 	public void runTask() {
 		thread.start();
+	}
+	
+	public boolean isAlive() {
+		return thread.isFinished();
 	}
 }

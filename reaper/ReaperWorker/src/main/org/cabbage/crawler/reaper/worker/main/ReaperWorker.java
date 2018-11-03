@@ -11,7 +11,10 @@ import org.cabbage.commons.utils.DateUtils;
 import org.cabbage.commons.utils.file.FileUtils;
 import org.cabbage.crawler.reaper.exception.ReaperException;
 import org.cabbage.crawler.reaper.worker.config.Configure;
+import org.cabbage.crawler.reaper.worker.handle.ManagerHandle;
+import org.cabbage.crawler.reaper.worker.thread.CheckTaskStateThread;
 import org.cabbage.crawler.reaper.worker.thread.RequestTaskThread;
+import org.cabbage.crawler.reaper.worker.thread.ResponseTaskThread;
 import org.cabbage.crawler.reaper.worker.utils.ReduceUtils;
 
 /**
@@ -24,7 +27,9 @@ public class ReaperWorker {
 
 	private static final Log LOGGER = LogFactory.getLog(ReaperWorker.class);
 
-	private static int tooManyOpenFileCount = 0;
+	private static int TOO_MANY_OPEN_FILES_COUNT = 0;
+
+	private static int ERROR_COUNT = 0;
 
 	private static String DEVICE = null;
 
@@ -38,15 +43,19 @@ public class ReaperWorker {
 	}
 
 	private static void responseStopTask() {
-		// TODO Auto-generated method stub
-
+		try {
+			Thread thread = new ResponseTaskThread(ManagerHandle.getInstance());
+			thread.start();
+		} catch (Exception e1) {
+			LOGGER.error("", e1);
+		}
 	}
 
 	private static void requestRunTask() {
 		Integer maxTaskCount = 16;
 		try {
 			maxTaskCount = Configure.getInstance(false).getPropertyInteger("maxTaskCount");
-			if(null==maxTaskCount||maxTaskCount<1) {
+			if (null == maxTaskCount || maxTaskCount < 1) {
 				maxTaskCount = 16;
 			}
 		} catch (ReaperException e) {
@@ -61,9 +70,16 @@ public class ReaperWorker {
 		}
 	}
 
+	/**
+	 * 检查所有任务的状态
+	 */
 	private static void checkAllTaskState() {
-		// TODO Auto-generated method stub
-
+		try {
+			Thread checkThread = new CheckTaskStateThread(ManagerHandle.getInstance());
+			checkThread.start();
+		} catch (Exception e1) {
+			LOGGER.error("", e1);
+		}
 	}
 
 	private static void resetTask() {
@@ -72,11 +88,10 @@ public class ReaperWorker {
 	}
 
 	private static void mapdb() {
-		ReduceUtils.mapdb();
+		ReduceUtils.initMapDB();
 	}
 
 	private static void initialize() {
-		// TODO Auto-generated method stub
 		initializeDevice();
 	}
 
@@ -90,15 +105,15 @@ public class ReaperWorker {
 	}
 
 	public synchronized static boolean isTooManyOpenFile() {
-		if (tooManyOpenFileCount > 1000) {
+		if (TOO_MANY_OPEN_FILES_COUNT > 1000) {
 			return true;
 		} else {
 			return false;
 		}
 	}
 
-	public synchronized static int getTooManyOpenFileCount() {
-		return tooManyOpenFileCount;
+	public synchronized static void tooManyOpenFileCount() {
+		TOO_MANY_OPEN_FILES_COUNT++;
 	}
 
 	public synchronized static void terminate(String msg) {
@@ -141,6 +156,18 @@ public class ReaperWorker {
 	public synchronized static int getCurrentStopTaskSize() {
 		int count = 0;
 		return count;
+	}
+	
+	public synchronized static boolean isErrorCountFull() {
+		if (ERROR_COUNT > 300) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public synchronized static void errorCount() {
+		ERROR_COUNT++;
 	}
 
 	public static void main(String[] args) {
