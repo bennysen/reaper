@@ -1,0 +1,18 @@
+CREATE TABLE page_mark (
+    domain text,
+    url text,
+    timestamp int,
+    perlink text,
+    outlinks set<text>,
+    producelinks set<text>,
+    producelinkscount int,
+    PRIMARY KEY (domain, url,timestamp)
+    );
+    
+CREATE TABLE page_mark_count (
+    domain text,
+    url text,
+    count int,
+    timestamp int,
+    PRIMARY KEY (domain, url)
+    );
