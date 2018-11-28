@@ -23,6 +23,10 @@ public class GeneralExtractor extends AbstractHtmlExtractor {
 	 */
 	protected static Log LOGGER = LogFactory.getLog(GeneralExtractor.class);
 
+	public GeneralExtractor(String url) {
+		super.setUrl(url);
+	}
+
 	@Override
 	public boolean isAcceptNode(au.id.jericho.lib.html.Element htmlElement) {
 		if (htmlElement.getName().equalsIgnoreCase("span") && htmlElement.getAttributeValue("style") != null
@@ -39,12 +43,13 @@ public class GeneralExtractor extends AbstractHtmlExtractor {
 	}
 
 	public static void main(String[] args) {
-		GeneralExtractor extractor = new GeneralExtractor();
+		String url = "http://dy.163.com/v2/media/medialist/C1474423982686-1.html";
+		GeneralExtractor extractor = new GeneralExtractor(url);
 		try {
 			HttpClientUtils httpClient = new HttpClientUtils();
-			byte[] responseData = httpClient.get("http://news.qq.com/", null, null, null).getBytes();
+			byte[] responseData = httpClient.get(url, null, null, null).getBytes();
 			ByteArrayInputStream bais = new ByteArrayInputStream(responseData);
-			extractor.parse(bais, "utf-8");
+			extractor.parse(bais, "gbk");
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -56,11 +61,11 @@ public class GeneralExtractor extends AbstractHtmlExtractor {
 		} else {
 			Iterator<String> i = urls.keySet().iterator();
 			while (i.hasNext()) {
-				String url = i.next();
+				url = i.next();
 				DefaultAttribute a = urls.get(url);
 				try {
-					if (null == a.getParent().getText() || a.getParent().getText().trim().length() == 0)
-					System.out.println(url + "    " + a.getParent().getText());
+//					if (null == a.getParent().getText() || a.getParent().getText().trim().length() == 0)
+						System.out.println(url + "    " + a.getParent().getText());
 					// System.out.println(url + " " + new
 					// String(a.getParent().getText().getBytes("ISO-8859-1"), "GB2312"));
 				} catch (Exception e) {

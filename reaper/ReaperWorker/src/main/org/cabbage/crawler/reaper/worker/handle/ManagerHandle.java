@@ -59,12 +59,11 @@ public class ManagerHandle {
 					task.setLastWorkTime(System.currentTimeMillis() / 1000);
 					AppContext.getAllLastActiveTimeMap().remove(task.getID());
 					runTaskMap.remove(id);
-					LOGGER.info("freeTaskFromDB(" + task.getID() + "," + handle + ")");
 					stopTaskMap.put(id, handle);
 					continue;
 				} else {
 					// 利用RMI接口实现心跳
-					checkTaskHeartBeatRMI(task,
+					checkTaskHeartBeat(task,
 							Configure.getInstance(false).getPropertyInteger("maxTaskHeartbeatIdleSecond"), true,
 							AppContext.getLastActiveTimeMap(task.getID()));
 				}
@@ -74,7 +73,7 @@ public class ManagerHandle {
 		}
 	}
 
-	private void checkTaskHeartBeatRMI(ReaperTask task, int maxIdleTime, boolean isStop, Date lastActiveTime) {
+	private void checkTaskHeartBeat(ReaperTask task, int maxIdleTime, boolean isStop, Date lastActiveTime) {
 		if (lastActiveTime != null) {
 			int heartBeat = (int) (lastActiveTime.getTime() / 1000);
 			if ((System.currentTimeMillis() / 1000 - heartBeat) > maxIdleTime) {
@@ -151,7 +150,7 @@ public class ManagerHandle {
 
 	public List<ReaperTask> getTask(int number) throws ReaperException, IOException, TimeoutException {
 		LOGGER.info("getTask begin...");
-		return RabbitMQUtils.getTask(number);
+		return RabbitMQUtils.getWaittingTask(number);
 	}
 
 	public void responseTask() throws ReaperException {

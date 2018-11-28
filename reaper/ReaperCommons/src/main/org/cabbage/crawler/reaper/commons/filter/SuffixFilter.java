@@ -108,13 +108,17 @@ public class SuffixFilter extends AbstractFilter {
 			if (null == link || link.trim().length() == 0) {
 				continue;
 			}
+			boolean kick = false;
 			for (String suffix : SUFFIXS) {
 				if (null == suffix || suffix.trim().length() == 0) {
 					continue;
 				}
 				if (link.endsWith(suffix) || link.endsWith(suffix.toUpperCase())) {
-					continue;
+					kick = true;
+					break;
 				}
+			}
+			if(!kick) {
 				result.add(link);
 			}
 		}

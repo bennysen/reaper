@@ -29,6 +29,14 @@
 		<name>mq_q_finished</name>
 		<value>finished</value>
 	</property>
+	<property>
+		<name>mq_q_reset</name>
+		<value>reset</value>
+	</property>
+	<property>
+		<name>mq_q_heartbeat</name>
+		<value>heartbeat</value>
+	</property>
 	<!-- cassandra configure -->
 	<property>
 		<name>cassandraHost</name>
@@ -38,38 +46,30 @@
 		<name>cassandraPort</name>
 		<value>9042</value>
 	</property>
-		<property>
+	<property>
 		<name>cassandraKeySpace</name>
 		<value>reaper</value>
 	</property>
-		<property>
+	<property>
 		<name>cassandraUsername</name>
 		<value>cassandra</value>
 	</property>
-		<property>
+	<property>
 		<name>cassandraPassword</name>
 		<value>cassandra</value>
 	</property>
-	<!-- reaper coordinator configure -->
-	<property>
-		<name>requestTaskURL</name>
-		<value>ori</value>
-	</property>
-	<property>
-		<name>responseTaskURL</name>
-		<value>ori</value>
-	</property>
-	<property>
-		<name>resetTaskURL</name>
-		<value>ori</value>
-	</property>
 	<!-- reaper worker configure -->
 	<property>
-		<name>filterSuffix</name>
-		<value>100</value>
+		<name>maxTaskCount</name>
+		<value>32</value>
 	</property>
 	<property>
 		<name>maxTaskHeartbeatIdleSecond</name>
 		<value>300</value>
+	</property>
+	<!-- merge configure -->
+	<property>
+		<name>mergeService</name>
+		<value>http://61.177.139.251:10089/MergeCoordinator/addJob</value>
 	</property>
 </propertys>

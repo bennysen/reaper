@@ -1,6 +1,7 @@
 package org.cabbage.crawler.reaper.beans.business.task;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Random;
 
 import org.apache.http.HttpHost;
@@ -29,11 +30,32 @@ public class ReaperTask implements Serializable {
 	// 任务ID
 	private Long ID;
 
+	// 站点名称
+	private String siteName;
+
 	// 任务URL
 	private String URL;
 
+	private Long siteType;
+
+	private Long countryID;
+
+	private Long domainID;
+
+	private Long domainType;
+
+	private Long proxyType;
+
+	private Long proxyIP;
+
+	private Long proxyPort;
+
+	private Long lastWorkTime;
+	
+	private List<Long> scriptIDs;
+	
 	// 处理流水ID
-	private long processID = System.currentTimeMillis() * 1000 + (new Random().nextInt(10) * 100)
+	private Long processID = System.currentTimeMillis() * 1000 + (new Random().nextInt(10) * 100)
 			+ (new Random().nextInt(10) * 10) + (new Random().nextInt(10));
 
 	// 任务前置URL
@@ -43,7 +65,7 @@ public class ReaperTask implements Serializable {
 	private Long status;
 
 	// http状态值
-	private int httpStatus;
+	private Long httpStatus;
 
 	// 执行任务的机器名
 	private String host;
@@ -139,7 +161,7 @@ public class ReaperTask implements Serializable {
 	 * 
 	 * @return
 	 */
-	public int getHttpStatus() {
+	public Long getHttpStatus() {
 		return httpStatus;
 	}
 
@@ -147,7 +169,7 @@ public class ReaperTask implements Serializable {
 	 * 
 	 * @param httpStatus
 	 */
-	public void setHttpStatus(int httpStatus) {
+	public void setHttpStatus(Long httpStatus) {
 		this.httpStatus = httpStatus;
 	}
 
@@ -173,11 +195,6 @@ public class ReaperTask implements Serializable {
 	 */
 	public long getProcessID() {
 		return processID;
-	}
-
-	public void setLastWorkTime(Long timestamp) {
-		// TODO Auto-generated method stub
-
 	}
 
 	public String getCharset() {
@@ -210,6 +227,90 @@ public class ReaperTask implements Serializable {
 			isInvalid = true;
 		}
 		return isInvalid;
+	}
+
+	public String getSiteName() {
+		return siteName;
+	}
+
+	public void setSiteName(String siteName) {
+		this.siteName = siteName;
+	}
+
+	public Long getSiteType() {
+		return siteType;
+	}
+
+	public void setSiteType(Long siteType) {
+		this.siteType = siteType;
+	}
+
+	public Long getCountryID() {
+		return countryID;
+	}
+
+	public void setCountryID(Long countryID) {
+		this.countryID = countryID;
+	}
+
+	public Long getDomainID() {
+		return domainID;
+	}
+
+	public void setDomainID(Long domainID) {
+		this.domainID = domainID;
+	}
+
+	public Long getDomainType() {
+		return domainType;
+	}
+
+	public void setDomainType(Long domainType) {
+		this.domainType = domainType;
+	}
+
+	public Long getProxyIP() {
+		return proxyIP;
+	}
+
+	public void setProxyIP(Long proxyIP) {
+		this.proxyIP = proxyIP;
+	}
+
+	public Long getProxyPort() {
+		return proxyPort;
+	}
+
+	public void setProxyPort(Long proxyPort) {
+		this.proxyPort = proxyPort;
+	}
+
+	public void setProcessID(Long processID) {
+		this.processID = processID;
+	}
+
+	public Long getProxyType() {
+		return proxyType;
+	}
+
+	public void setProxyType(Long proxyType) {
+		this.proxyType = proxyType;
+	}
+
+	public Long getLastWorkTime() {
+		return lastWorkTime;
+	}
+
+	public void setLastWorkTime(Long lastWorkTime) {
+		this.lastWorkTime = lastWorkTime;
+	}
+
+	public List<Long> getScriptIDs() {
+		return scriptIDs;
+	}
+
+	public void setScriptIDs(List<Long> scriptIDs) {
+		this.scriptIDs = scriptIDs;
 	}
 
 	/**

@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,8 +14,10 @@ import org.cabbage.crawler.reaper.exception.ReaperException;
 import org.cabbage.crawler.reaper.worker.config.Configure;
 import org.cabbage.crawler.reaper.worker.handle.ManagerHandle;
 import org.cabbage.crawler.reaper.worker.thread.CheckTaskStateThread;
+import org.cabbage.crawler.reaper.worker.thread.FinishTaskThread;
 import org.cabbage.crawler.reaper.worker.thread.RequestTaskThread;
-import org.cabbage.crawler.reaper.worker.thread.ResponseTaskThread;
+import org.cabbage.crawler.reaper.worker.thread.TaskHeartbeatThread;
+import org.cabbage.crawler.reaper.worker.utils.RabbitMQUtils;
 import org.cabbage.crawler.reaper.worker.utils.ReduceUtils;
 
 /**
@@ -37,15 +40,19 @@ public class ReaperWorker {
 		return DEVICE;
 	}
 
-	private static void trackerTask() {
-		// TODO Auto-generated method stub
-
-	}
-
 	private static void responseStopTask() {
 		try {
-			Thread thread = new ResponseTaskThread(ManagerHandle.getInstance());
+			Thread thread = new FinishTaskThread(ManagerHandle.getInstance());
 			thread.start();
+		} catch (Exception e1) {
+			LOGGER.error("", e1);
+		}
+	}
+
+	private static void heartbeat() {
+		try {
+			Thread checkThread = new TaskHeartbeatThread();
+			checkThread.start();
 		} catch (Exception e1) {
 			LOGGER.error("", e1);
 		}
@@ -83,8 +90,19 @@ public class ReaperWorker {
 	}
 
 	private static void resetTask() {
-		// TODO Auto-generated method stub
-
+		try {
+			String resetQueue = Configure.getInstance(false).getProperty("mq_q_reset");
+			RabbitMQUtils.send(resetQueue, getDevice());
+			Thread.sleep(10000);
+		} catch (IOException e) {
+			LOGGER.error("", e);
+		} catch (ReaperException e) {
+			LOGGER.error("", e);
+		} catch (TimeoutException e) {
+			LOGGER.error("", e);
+		} catch (InterruptedException e) {
+			LOGGER.error("", e);
+		}
 	}
 
 	private static void mapdb() {
@@ -157,7 +175,7 @@ public class ReaperWorker {
 		int count = 0;
 		return count;
 	}
-	
+
 	public synchronized static boolean isErrorCountFull() {
 		if (ERROR_COUNT > 300) {
 			return true;
@@ -171,12 +189,12 @@ public class ReaperWorker {
 	}
 
 	public static void main(String[] args) {
+
+		resetTask();
 		// 1.1初始化配置文件，数据库连接，任务管理器
 		initialize();
 
 		mapdb();
-
-		resetTask();
 
 		// 1.3检查所有任务的状态
 		checkAllTaskState();
@@ -186,7 +204,7 @@ public class ReaperWorker {
 
 		responseStopTask();
 
-		trackerTask();
+		heartbeat();
 	}
 
 }

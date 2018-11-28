@@ -155,6 +155,58 @@ public class HttpClientUtils {
 		}
 		return html;
 	}
+	
+	/**
+	 * httpClient post请求
+	 * 
+	 * @param url
+	 *            请求url
+	 * @param header
+	 *            头部信息
+	 * @param param
+	 *            请求参数 form提交适用
+	 * @param entity
+	 *            请求实体 json/xml提交适用
+	 * @return 可能为空 需要处理
+	 * @throws Exception
+	 *
+	 */
+	public HttpResponse post(HttpPost httpPost, Map<String, String> header, Map<String, String> param, HttpEntity entity)
+			throws Exception {
+		HttpResponse httpResponse = null;
+		CloseableHttpClient httpClient = null;
+		try {
+			httpClient = getHttpClient(null, null);
+			// 设置头信息
+			if (MapUtils.isNotEmpty(header)) {
+				for (Map.Entry<String, String> entry : header.entrySet()) {
+					httpPost.addHeader(entry.getKey(), entry.getValue());
+				}
+			}
+			// 设置请求参数
+			if (MapUtils.isNotEmpty(param)) {
+				List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+				for (Map.Entry<String, String> entry : param.entrySet()) {
+					// 给参数赋值
+					formparams.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+				}
+				UrlEncodedFormEntity urlEncodedFormEntity = new UrlEncodedFormEntity(formparams, Consts.UTF_8);
+				httpPost.setEntity(urlEncodedFormEntity);
+			}
+			// 设置实体 优先级高
+			if (entity != null) {
+				httpPost.setEntity(entity);
+			}
+			  httpResponse = httpClient.execute(httpPost);
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			if (httpClient != null) {
+				httpClient.close();
+			}
+		}
+		return httpResponse;
+	}
 
 	public String get(String url, HttpHost proxy, CookieStore cookieStore, String charset) {
 		HttpGet get = new HttpGet(url);

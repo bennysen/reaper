@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<propertys>
+	<!-- mq configure -->
+	<property>
+		<name>mq_host</name>
+		<value>192.168.80.101</value>
+	</property>
+	<property>
+		<name>mq_port</name>
+		<value>5672</value>
+	</property>
+	<property>
+		<name>mq_username</name>
+		<value>admin</value>
+	</property>
+	<property>
+		<name>mq_password</name>
+		<value>123456</value>
+	</property>
+	<property>
+		<name>mq_q_waitting</name>
+		<value>waitting4process</value>
+	</property>
+	<property>
+		<name>mq_q_processing</name>
+		<value>processing</value>
+	</property>
+	<property>
+		<name>mq_q_finished</name>
+		<value>finished</value>
+	</property>
+	<property>
+		<name>mq_q_reset</name>
+		<value>reset</value>
+	</property>
+	<property>
+		<name>mq_q_heartbeat</name>
+		<value>heartbeat</value>
+	</property>
+	<!-- task configure -->
+	<property>
+		<name>task_max_idle_time</name>
+		<value>600</value>
+	</property>
+</propertys>

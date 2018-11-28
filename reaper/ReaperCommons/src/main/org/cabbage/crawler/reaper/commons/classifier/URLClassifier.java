@@ -1,5 +1,6 @@
 package org.cabbage.crawler.reaper.commons.classifier;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,9 +10,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.cabbage.crawler.reaper.commons.classifier.utils.URLClassifierEntityComparator;
+import org.cabbage.commons.utils.file.FileUtils;
 import org.cabbage.crawler.reaper.commons.classifier.utils.LevenshteinDistance;
 import org.cabbage.crawler.reaper.commons.classifier.utils.URLClassifierEntity;
+import org.cabbage.crawler.reaper.commons.classifier.utils.URLClassifierEntityComparator;
+import org.cabbage.crawler.reaper.commons.html.extractor.GeneralExtractor;
+import org.cabbage.crawler.reaper.commons.network.httpclient.HttpClientUtils;
 
 /**
  * URL格式分类器
@@ -21,7 +25,7 @@ import org.cabbage.crawler.reaper.commons.classifier.utils.URLClassifierEntity;
  */
 public class URLClassifier {
 
-	public synchronized static List<URLClassifierEntity> urlCrawledFilter(String taskurl, Set<String> urlSet) {
+	public List<URLClassifierEntity> urlCrawledFilter(String taskurl, Set<String> urlSet) {
 		List<URLClassifierEntity> urlList = new ArrayList<URLClassifierEntity>();
 		if (CollectionUtils.isEmpty(urlSet)) {
 			return urlList;
@@ -37,17 +41,17 @@ public class URLClassifier {
 			if (pd.containsKey(key)) {
 				continue;
 			}
-
 			Set<String> urlSetStore = new HashSet<String>();
 			for (String key1 : urlSetCopy) {
 				if (pd.containsKey(key1)) {
 					continue;
 				}
 				double dis = LevenshteinDistance.sim(key, key1);// 相似度>0.7认为相似
-				if (dis > 0.7) {
+				if (dis > 0.6) {
 					urlSetStore.add(key1);
 					urlSetDis.add(key1);// 相似的所有url 包括自身
 					pd.put(key, key);
+					pd.put(key1, key1);
 				}
 			}
 			urlSetStore.add(key);
@@ -68,7 +72,7 @@ public class URLClassifier {
 		return sort(urlList);
 	}
 
-	private static List<URLClassifierEntity> sort(List<URLClassifierEntity> src) {
+	private List<URLClassifierEntity> sort(List<URLClassifierEntity> src) {
 
 		if (null == src || src.size() == 0) {
 			return null;
@@ -93,16 +97,25 @@ public class URLClassifier {
 		return dist;
 	}
 
-	private static String FormatDouble(Double ratio) {
+	private String FormatDouble(Double ratio) {
 		int i = (int) (ratio * 100000);
 		ratio = (double) i / 1000;
 		return ratio + "%";
 	}
 
-	public static void main(String[] args) {
-		String url = "http://www.qq.com/";
-		// TODO must get the page outlinks
-		Set<String> outlinks = new HashSet<String>();
+	public static void main(String[] args) throws Exception {
+		String url = "http://www.china.com/";
+		FileUtils.deleteFile("temp.txt");
+		GeneralExtractor extractor = new GeneralExtractor(url);
+		try {
+			HttpClientUtils httpClient = new HttpClientUtils();
+			byte[] responseData = httpClient.get(url, null, null, null).getBytes();
+			ByteArrayInputStream bais = new ByteArrayInputStream(responseData);
+			extractor.parse(bais, "utf-8");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		Set<String> outlinks = extractor.getUrlsWithAttribute().keySet();
 		Set<String> urlSet = new HashSet<String>();
 		for (String u : outlinks) {
 			if (u.contains(".html")) {
@@ -112,16 +125,26 @@ public class URLClassifier {
 			}
 			urlSet.add(u);
 		}
-		List<URLClassifierEntity> uEntityList = URLClassifier.urlCrawledFilter(url, urlSet);
+		List<URLClassifierEntity> uEntityList = new URLClassifier().urlCrawledFilter(url, outlinks);
 		System.out.println(urlSet.size() + "," + uEntityList.size());
 		System.out.println("--------------------");
+
 		for (URLClassifierEntity uEntity : uEntityList) {
 			Set<String> uSet = uEntity.getURLSet();
 			System.out.println(uEntity.getRatio() + ", size:" + uSet.size() + ", " + uEntity.getFeatureURL());
+			FileUtils.append("temp.txt",
+					uEntity.getRatio() + ", size:" + uSet.size() + ", " + uEntity.getFeatureURL() + "\r\n");
+			// int i = 0;
 			for (String s : uSet) {
 				System.out.println(s);
+				// if (i > 3) {
+				// break;
+				// }
+				// i++;
+				FileUtils.append("temp.txt", s + "\r\n");
 			}
 			System.out.println("--------------------");
+			FileUtils.append("temp.txt", "--------------------\r\n");
 		}
 	}
 

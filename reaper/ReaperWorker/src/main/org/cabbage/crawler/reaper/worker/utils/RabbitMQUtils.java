@@ -23,7 +23,7 @@ public class RabbitMQUtils {
 
 	private static final Log LOGGER = LogFactory.getLog(RabbitMQUtils.class);
 
-	public static synchronized List<ReaperTask> getTask(int number)
+	public static synchronized List<ReaperTask> getWaittingTask(int number)
 			throws IOException, TimeoutException, ReaperException {
 		LOGGER.info("getTask begin...");
 		List<ReaperTask> tasks = new ArrayList<ReaperTask>();
@@ -182,6 +182,63 @@ public class RabbitMQUtils {
 		}
 	}
 
+	public static synchronized void send(String queue, String msg)
+			throws IOException, ReaperException, TimeoutException {
+		if (null == msg || msg.length() == 0) {
+			return;
+		}
+		String mqHost = Configure.getInstance(false).getProperty("mq_host");
+		Integer mqPort = Configure.getInstance(false).getPropertyInteger("mq_port");
+		String mqUsername = Configure.getInstance(false).getProperty("mq_username");
+		String mqPassword = Configure.getInstance(false).getProperty("mq_password");
+
+		if (null == mqHost || mqHost.trim().length() == 0 || null == mqPort || mqPort < 0 || null == mqUsername
+				|| mqUsername.trim().length() == 0 || null == mqPassword || mqPassword.trim().length() == 0
+				|| null == queue || queue.trim().length() == 0) {
+			LOGGER.error("Check configure file,MQ configures are invalid!");
+		} else {
+			LOGGER.info("MQ configures for get ReaperTask[" + mqHost + ":" + mqPort + "/" + queue + "{" + mqUsername
+					+ "/" + mqPassword + "}]");
+		}
+
+		ConnectionFactory factory = null;
+		Connection connection = null;
+		Channel channel = null;
+		try {
+			factory = new ConnectionFactory();
+			factory.setHost(mqHost);
+			factory.setPort(mqPort);
+			factory.setUsername(mqUsername);
+			factory.setPassword(mqPassword);
+
+			connection = factory.newConnection();
+			channel = connection.createChannel();
+
+			// 是否持久的;耐用的，耐久的;长期的
+			// 声明队列为持久类型的,声明的时候记得把队列的名字改一下,因为rmq不允许对一个已经存在的队列重新定义
+			boolean durable = true;
+			channel.queueDeclare(queue, durable, false, false, null);
+			/**
+			 * 使用basicQos方法和 prefetchCount = 1设置。 这告诉RabbitMQ一次不要向消费者发送多个消息。
+			 * 或者换句话说，不要向消费者发送新消息，直到它处理并确认了前一个消息。 相反，它会将其分派给不是仍然忙碌的下一个消费者。
+			 */
+			int prefetchCount = 1;
+			// 代表让服务器不要同时给一个消费者超过1个消息,直到当前的消息被消耗掉
+			channel.basicQos(prefetchCount);
+
+			// MessageProperties.PERSISTENT_TEXT_PLAIN 配合durable=true使用
+			channel.basicPublish("", queue, MessageProperties.PERSISTENT_TEXT_PLAIN, msg.getBytes());
+			LOGGER.info("Send [" + msg + "] to [" + queue + "] success!");
+		} finally {
+			if (null != channel && channel.isOpen()) {
+				channel.close();
+			}
+			if (null != connection && connection.isOpen()) {
+				connection.close();
+			}
+		}
+	}
+
 	public static void main(String[] args) throws IOException, TimeoutException, ReaperException {
 		List<ReaperTask> tasks = new ArrayList<ReaperTask>();
 		ReaperTask task = new ReaperTask();
@@ -191,7 +248,7 @@ public class RabbitMQUtils {
 		tasks.add(task);
 
 		RabbitMQUtils.sendTask("waitting4process", tasks);
-		tasks = RabbitMQUtils.getTask(10);
+		tasks = RabbitMQUtils.getWaittingTask(10);
 
 		if (null == tasks || tasks.size() == 0) {
 			System.out.println("Get nothing!");

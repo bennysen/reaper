@@ -2,21 +2,38 @@ package org.cabbage.crawler.reaper.worker.thread;
 
 import java.io.ByteArrayInputStream;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.util.EntityUtils;
 import org.cabbage.commons.utils.URLUtils;
+import org.cabbage.commons.utils.json.Json;
 import org.cabbage.crawler.reaper.beans.business.task.ReaperTask;
+import org.cabbage.crawler.reaper.commons.classifier.URLClassifier;
+import org.cabbage.crawler.reaper.commons.classifier.utils.URLClassifierEntity;
 import org.cabbage.crawler.reaper.commons.filter.BlackLinkFilter;
 import org.cabbage.crawler.reaper.commons.filter.SuffixFilter;
+import org.cabbage.crawler.reaper.commons.filter.ULRStringFilterFactory;
+import org.cabbage.crawler.reaper.commons.filter.URLStringFilter;
 import org.cabbage.crawler.reaper.commons.html.extractor.GeneralExtractor;
 import org.cabbage.crawler.reaper.commons.network.httpclient.HttpClientUtils;
 import org.cabbage.crawler.reaper.exception.ReaperException;
+import org.cabbage.crawler.reaper.worker.config.Configure;
+import org.cabbage.crawler.reaper.worker.context.AppContext;
 import org.cabbage.crawler.reaper.worker.utils.CassandraUtils;
 import org.cabbage.crawler.reaper.worker.utils.ReduceUtils;
 import org.dom4j.tree.DefaultAttribute;
@@ -36,7 +53,9 @@ public class ReaperWorkerThread extends Thread {
 	ReaperTask task = null;
 	String domain = null;
 	Map<String, DefaultAttribute> url2node = null;
+	Set<String> filteredLinks = null;
 	Set<String> produceLinks = null;
+	Set<String> seedLinks = new CopyOnWriteArraySet<String>();
 
 	/**
 	 * 
@@ -93,11 +112,14 @@ public class ReaperWorkerThread extends Thread {
 	}
 
 	private void finish() {
-		this.task.setStatus(ReaperTask.FINISH);
+
+		task.setStatus(ReaperTask.FINISH);
+		LOGGER.info("Task [" + task.getURL() + "] is work done!");
 	}
 
 	private void disable() {
-		this.task.setStatus(ReaperTask.DISABLE);
+		task.setStatus(ReaperTask.DISABLE);
+		LOGGER.info("Task [" + task.getURL() + "] is work done!");
 	}
 
 	/**
@@ -105,7 +127,29 @@ public class ReaperWorkerThread extends Thread {
 	 */
 	public void run() {
 		LOGGER.info("Task [" + task.getURL() + "] is running!");
+		process();
+		while (true) {
+			if (null == seedLinks || seedLinks.size() == 0) {
+				break;
+			}
+			String perURL = task.getURL();
+			for (String seed : seedLinks) {
+				task.setPreURL(perURL);
+				task.setURL(seed);
+				filteredLinks = null;
+				produceLinks = null;
+				url2node = null;
+				process();
+			}
+			LOGGER.warn("Seed links size = [" + seedLinks.size() + "]");
+		}
+		finish();
+	}
 
+	private void process() {
+		LOGGER.info("                         【" + this.task.getURL()
+				+ "】                                                            ");
+		AppContext.setLastActiveTimeMap(task.getID(), new Date());
 		// step 1 paser url page,get page outlinks
 		doHttp();
 		if (null == url2node || url2node.size() == 0) {
@@ -113,27 +157,99 @@ public class ReaperWorkerThread extends Thread {
 			finish();
 			return;
 		}
-
+		// step x filter
+		filteredLinks = doFilter(url2node);
 		// step x classify
 		classify();
 		// setp x calculate
 		calculate();
-		// step x filter
-		Set<String> urls = doFilter(url2node);
-		if (null == urls || urls.size() == 0) {
+
+		URLStringFilter usf = ULRStringFilterFactory.getInstance().getFilter(domain, URLStringFilter.OUTPUT);
+		if (null == usf) {
+		} else {
+			usf.setLinks(filteredLinks);
+			filteredLinks = usf.filter();
+		}
+		if (null == filteredLinks || filteredLinks.size() == 0) {
 			LOGGER.warn("Task [" + task.getURL() + "] is get nothing!");
 			finish();
+			return;
 		}
 
 		// step x reduce
-		produceLinks = ReduceUtils.reduce(domain, urls);
-		for (String url : urls) {
-			System.out.println(url);
-		}
+		produceLinks = ReduceUtils.reduce(domain, filteredLinks);
+		// for (String url : produceLinks) {
+		// System.err.println(url);
+		// }
 		// step x mark
-		mark();
-		// step x output result
-		LOGGER.info("Task [" + task.getURL() + "] is work done!");
+		// mark();
+
+		toMerge();
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private boolean toMerge() {
+		boolean toMerge = false;
+		Json j = new Json();
+		j.a("projectid", task.getID());
+		j.a("projectname", task.getSiteName());
+		j.a("srcurl", task.getURL());
+		j.a("sitetype", task.getSiteType());
+		j.a("domaintype", task.getDomainType());
+		j.a("countryid", task.getCountryID());
+		j.a("areaid", 0);
+		j.a("proxytype", task.getProxyType());
+		j.a("postdata", null);
+		j.a("posturl", null);
+		j.a("trycount", 3);
+		j.a("timeout", 60);
+		j.a("iscrawlercomment", "0");
+		j.a("domainid", task.getDomainID());
+		if (null == task.getProxyType() || task.getProxyType() == 0 || null == task.getProxyIP()
+				|| null == task.getProxyPort() || task.getProxyIP() == 0 || task.getProxyPort() == 0) {
+			j.a("proxyip", "");
+			j.a("proxyport", "");
+		} else {
+
+			j.a("proxyip", task.getProxyIP());
+			j.a("proxyport", task.getProxyPort());
+
+		}
+		List<Json> js = new ArrayList<Json>();
+		for (String url : produceLinks) {
+			if (null != url && url.trim().length() > 0) {
+				js.add(new Json("url", url.trim()));
+				System.out.println(url);
+			}
+		}
+		if (null != js && js.size() > 0) {
+			j.al("urls", js);
+			Map<String, String> params = new HashMap<String, String>();
+			params.put("job", j.toString());
+			try {
+				String mergeService = Configure.getInstance(false).getProperty("mergeService");
+				HttpClientUtils client = new HttpClientUtils();
+				HttpResponse httpResponse = client.post(new HttpPost(mergeService), null, params, null);
+				String res = null;
+				int statusCode = httpResponse.getStatusLine().getStatusCode();
+				if (statusCode == HttpStatus.SC_OK) {
+					toMerge = true;
+					HttpEntity resEntity = httpResponse.getEntity();
+					res = EntityUtils.toString(resEntity);
+				} else {
+					res = httpResponse.getStatusLine().toString();
+				}
+				LOGGER.info("pid[" + task.getID() + "] post[" + js.size() + "] to MergeService end![" + res + "]");
+			} catch (Exception e) {
+				LOGGER.error(e);
+			}
+		}
+		return toMerge;
 	}
 
 	/**
@@ -149,8 +265,8 @@ public class ReaperWorkerThread extends Thread {
 			ct.insert(QueryBuilder.insertInto(CassandraUtils.getKeyspace(), "page_mark")
 					.values(new String[] { "domain", "url", "timestamp", "outlinks", "perlink", "producelinks",
 							"producelinkscount" },
-							new Object[] { domain, task.getURL(), System.currentTimeMillis() / 1000,
-									this.url2node.keySet(), task.getPreURL(), produceLinks, produceLinks.size() }));
+							new Object[] { domain, task.getURL(), System.currentTimeMillis() / 1000, filteredLinks,
+									task.getPreURL(), produceLinks, produceLinks.size() }));
 		} catch (Exception e) {
 			LOGGER.error("Mark [" + task.getURL() + "] error!", e);
 		} finally {
@@ -169,11 +285,48 @@ public class ReaperWorkerThread extends Thread {
 	 * 链接URL格式分类
 	 */
 	private void classify() {
-		// TODO
+		List<URLClassifierEntity> uEntityList = null;
+		try {
+			uEntityList = new URLClassifier().urlCrawledFilter(task.getURL(), filteredLinks);
+		} catch (Exception e) {
+			LOGGER.warn("URLClassifier error!", e);
+			return;
+		}
+		int j = uEntityList.size();
+		if (j > 3) {
+			j = 3;
+		}
+		if (j < 2) {
+			// can not classifier!
+			return;
+		}
+		for (int i = 0; i < j; i++) {
+			URLClassifierEntity uEntity = uEntityList.get(i);
+			LOGGER.info("Feature url[" + uEntity.getRatio() + "]:" + uEntity.getFeatureURL());
+			Set<String> uSet = uEntity.getURLSet();
+			if (null == uSet || uSet.size() == 0) {
+				break;
+			} else {
+				for (String seed : uSet) {
+					if (seedLinks.size() > 1024) {
+						break;
+					}
+					if (null == seed || seed.trim().length() == 0) {
+						continue;
+					}
+					if (seed.contains("index")) {
+						continue;
+					}
+					if (StringUtils.countMatches(seed, "/") < 6) {
+						seedLinks.add(seed.trim());
+					}
+				}
+			}
+		}
 	}
 
 	private void doHttp() {
-		GeneralExtractor extractor = new GeneralExtractor();
+		GeneralExtractor extractor = new GeneralExtractor(task.getURL());
 		String charset = null;
 		if (null == task || task.isInvalid()) {
 			return;
@@ -185,8 +338,11 @@ public class ReaperWorkerThread extends Thread {
 		}
 		try {
 			HttpClientUtils httpClient = new HttpClientUtils();
-			byte[] responseData = httpClient.get(task.getURL(), task.getProxy(), task.getCookieStore(), charset)
-					.getBytes();
+			String data = httpClient.get(task.getURL(), task.getProxy(), task.getCookieStore(), charset);
+			if (null == data) {
+				return;
+			}
+			byte[] responseData = data.getBytes();
 			ByteArrayInputStream bais = new ByteArrayInputStream(responseData);
 			extractor.parse(bais, charset);
 		} catch (Exception e) {
@@ -207,11 +363,15 @@ public class ReaperWorkerThread extends Thread {
 			String url = i.next();
 			DefaultAttribute a = url2node.get(url);
 			try {
-				if (null == a.getParent().getText() || a.getParent().getText().trim().length() == 0) {
-					continue;
-					// TODO this condition is not enough
+				if (null != a.getParent().getText() && a.getParent().getText().trim().length() > 0) {
+					link2text.put(url, a.getParent().getText().trim());
+				} else if (null != a.getText() && a.getText().trim().length() > 0) {
+					link2text.put(url, a.getText().trim());
+				} else if (null != a.getValue() && a.getValue().trim().length() > 0) {
+					link2text.put(url, a.getValue().trim());
+				} else {
+					// System.out.println(url);
 				}
-				link2text.put(url, a.getParent().getText().trim());
 			} catch (Exception e) {
 			}
 		}
@@ -220,13 +380,24 @@ public class ReaperWorkerThread extends Thread {
 		if (null == urls || urls.size() == 0) {
 			return null;
 		}
+
 		SuffixFilter sf = new SuffixFilter(urls);
 		urls = sf.filter();
 		if (null == urls || urls.size() == 0) {
 			return null;
 		}
-		Set<String> urls2 = new HashSet<String>();
 
+		URLStringFilter usf = ULRStringFilterFactory.getInstance().getFilter(domain, URLStringFilter.SEED);
+		if (null == usf) {
+		} else {
+			usf.setLinks(urls);
+			urls = usf.filter();
+			if (null == urls || urls.size() == 0) {
+				return null;
+			}
+		}
+
+		Set<String> urls2 = new HashSet<String>();
 		for (String url : urls) {
 			if (URLUtils.isInvalid(url)) {
 				continue;
@@ -243,7 +414,8 @@ public class ReaperWorkerThread extends Thread {
 		ReduceUtils.initMapDB();
 		ReaperTask task = new ReaperTask();
 		task.setCharset("utf-8");
-		task.setURL("http://news.qq.com/");
+		task.setURL("http://www.ifeng.com/");
+		task.setID(30003l);
 		ReaperWorkerThread t = new ReaperWorkerThread(task);
 		t.start();
 	}

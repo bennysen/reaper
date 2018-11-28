@@ -117,7 +117,7 @@ public class CassandraTest {
 	public static void main(String[] args) {
 		CassandraTest ct = new CassandraTest();
 		ct.connect();
-//		ct.query();
+		ct.query();
 		ct.session.execute(
 				"update reaper.point set outpoint=outpoint+{'http://news.163.com/18/0809/14/DOPB0F4G0001899N.html'} where domain = '163.com'");
 	}

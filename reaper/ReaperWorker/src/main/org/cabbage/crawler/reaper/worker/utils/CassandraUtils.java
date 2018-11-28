@@ -1,12 +1,15 @@
 package org.cabbage.crawler.reaper.worker.utils;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.cabbage.crawler.reaper.exception.ReaperException;
 import org.cabbage.crawler.reaper.worker.config.Configure;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
@@ -88,8 +91,26 @@ public class CassandraUtils {
 	/**
 	 * 执行
 	 */
-	public void execute(String cql) {
-		session.execute(cql);
+	public void query() {
+		ResultSet rs = session.execute(QueryBuilder.select("outlinks", "producelinks").from("reaper", "page_mark")
+				.where(QueryBuilder.eq("domain", "qq.com")).and(QueryBuilder.eq("url", "http://news.qq.com/")));
+		Iterator<Row> rsIterator = rs.iterator();
+		while (rsIterator.hasNext()) {
+			Row row = rsIterator.next();
+			Set<String> outlinks = row.getSet("outlinks", String.class);
+			if (null == outlinks || outlinks.size() == 0) {
+				System.err.println("Get nothing!");
+			} else {
+				int i = 0;
+				for (String outlink : outlinks) {
+					System.out.println(outlink);
+					if (i > 5) {
+						break;
+					}
+				}
+			}
+			System.err.println("========================");
+		}
 	}
 
 	/**
@@ -110,11 +131,7 @@ public class CassandraUtils {
 		producelinks.add("https://new.qq.com/omn/20181103/20181103A040WC.html");
 		try {
 			ct.connect();
-			ct.insert(QueryBuilder.insertInto(CassandraUtils.getKeyspace(), "page_mark")
-					.values(new String[] { "domain", "url", "timestamp", "outlinks", "perlink", "producelinks",
-							"producelinkscount" },
-							new Object[] { "qq.com", "http://news.qq.com/", 1541225534, outlinks, "http://www.qq.com/",
-									producelinks, producelinks.size() }));
+			ct.query();
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {

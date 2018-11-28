@@ -411,13 +411,17 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 	@SuppressWarnings("unchecked")
 	public Map<String, DefaultAttribute> getUrlsWithAttribute() {
 		Map<String, DefaultAttribute> map = new HashMap<String, DefaultAttribute>();
-		List<DefaultAttribute> elements = this.document.selectNodes("//@href");
-		elements.addAll(this.document.selectNodes("//@HREF"));
+		if (null == document) {
+			return null;
+		}
+		List<DefaultAttribute> elements = document.selectNodes("//@href");
+		elements.addAll(document.selectNodes("//@HREF"));
 		for (DefaultAttribute element : elements) {
 			String url = element.getText();
 			if (isJunkUrl(url)) {
 				continue;
 			}
+			url = this.assembledUrl(super.getUrl(), url);
 			map.put(url, element);
 		}
 		return map;

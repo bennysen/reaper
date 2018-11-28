@@ -251,7 +251,6 @@ public class Json extends LinkedHashMap<String, Object> {
 		return U.toLongList(this.s(name));
 	}
 
-	@Deprecated
 	public Object toBean(Class<?> clazz) {
 		try {
 			Object o = clazz.newInstance();

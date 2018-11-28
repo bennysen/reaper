@@ -34,7 +34,18 @@ class CharSetNotify implements nsICharsetDetectionObserver {
  *
  */
 public abstract class AbstractExtractor implements Extractor {
-	protected final static Log logger = LogFactory.getLog(AbstractExtractor.class);
+
+	protected final static Log LOGGER = LogFactory.getLog(AbstractExtractor.class);
+
+	private String url;
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
 
 	public static synchronized boolean xmlDocWrite(Document doc, String fileName) {
 		FileOutputStream out = null;
@@ -53,7 +64,7 @@ public abstract class AbstractExtractor implements Extractor {
 				try {
 					out.close();
 				} catch (IOException e) {
-					logger.error("save dom file failed with ", e);
+					LOGGER.error("save dom file failed with ", e);
 				}
 			}
 		}
@@ -124,8 +135,6 @@ public abstract class AbstractExtractor implements Extractor {
 		} else {
 			encoding = notify.encoding;
 		}
-		// modified by skwei
-		// 修正网页GB2312中的繁体，脑残体的乱码问题
 		return encoding;
 	}
 

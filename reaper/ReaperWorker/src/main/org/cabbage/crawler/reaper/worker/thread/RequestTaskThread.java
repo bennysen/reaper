@@ -20,7 +20,7 @@ public class RequestTaskThread extends Thread {
 
 	private static final Log LOGGER = LogFactory.getLog(RequestTaskThread.class);
 
-	int maxTaskCount = 16;
+	int maxTaskCount = 1;
 	int selectTaskWait = 10000;
 
 	/**
@@ -61,24 +61,24 @@ public class RequestTaskThread extends Thread {
 				}
 
 				int free = maxTaskCount - currentTotalTaskSize;
-				
+
 				if (free == 0 || free < 0) {
 					break;
 				}
-				LOGGER.info("本次获取任务数量【" + free + "】。");
 
 				ManagerHandle handle = ManagerHandle.getInstance();
 
-				List<ReaperTask> ts = RabbitMQUtils.getTask(free);
-
+				List<ReaperTask> ts = RabbitMQUtils.getWaittingTask(free);
 				if (null == ts || ts.size() == 0) {
+					LOGGER.info("RabbitMQUtils.getWaittingTask(" + free + "),really(0)");
 				} else {
+					LOGGER.info("RabbitMQUtils.getWaittingTask(" + free + "),really(" + ts.size() + ")");
 					for (int i = 0; i < ts.size(); i++) {
 						ReaperTask task = ts.get(i);
-						if (null == task||task.isInvalid()) {
+						if (null == task || task.isInvalid()) {
 							LOGGER.warn("No task to run[" + i + "]");
 						} else {
-							LOGGER.info("run task [" + i + "],");
+							LOGGER.info("run task [" + task.getID() + "," + task.getURL() + "]");
 							try {
 								handle.runTask(task);
 							} catch (Exception e) {
