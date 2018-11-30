@@ -314,9 +314,9 @@ public class ReaperWorkerThread extends Thread {
 					if (null == seed || seed.trim().length() == 0) {
 						continue;
 					}
-					if (seed.contains("index")) {
-						continue;
-					}
+//					if (seed.contains("index")) {
+//						continue;
+//					}
 					if (StringUtils.countMatches(seed, "/") < 6) {
 						seedLinks.add(seed.trim());
 					}
