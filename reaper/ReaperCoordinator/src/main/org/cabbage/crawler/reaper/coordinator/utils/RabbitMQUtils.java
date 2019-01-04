@@ -58,21 +58,22 @@ public class RabbitMQUtils {
 			////////////////////////////////////////////////////
 			int count = 0;
 			while (true) {
-				count++;
-				if (hosts.size() >= number || count > 10) {
+				
+				if (hosts.size() >= number || count > 3) {
 					break;
 				}
 				GetResponse response = channel4get.basicGet(mqResetQueueName, false);
 				if (null == response) {
+					count++;
 					try {
-						Thread.sleep(3000l);
+						Thread.sleep(1000l);
 					} catch (InterruptedException e) {
 					}
 					continue;
 				}
 				String host = null;
 				try {
-					host = (String) SerializableUtils.readObject(response.getBody());
+					host = new String(response.getBody(), "UTF-8");
 					if (null == host || host.trim().length() == 0) {
 					} else {
 						hosts.add(host);

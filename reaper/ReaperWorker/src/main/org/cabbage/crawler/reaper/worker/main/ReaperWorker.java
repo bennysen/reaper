@@ -189,10 +189,10 @@ public class ReaperWorker {
 	}
 
 	public static void main(String[] args) {
-
-		resetTask();
 		// 1.1初始化配置文件，数据库连接，任务管理器
 		initialize();
+		
+		resetTask();
 
 		mapdb();
 

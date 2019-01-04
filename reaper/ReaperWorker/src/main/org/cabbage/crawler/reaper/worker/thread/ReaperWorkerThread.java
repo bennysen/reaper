@@ -1,6 +1,7 @@
 package org.cabbage.crawler.reaper.worker.thread;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -314,10 +315,10 @@ public class ReaperWorkerThread extends Thread {
 					if (null == seed || seed.trim().length() == 0) {
 						continue;
 					}
-//					if (seed.contains("index")) {
-//						continue;
-//					}
-					if (StringUtils.countMatches(seed, "/") < 6) {
+					// if (seed.contains("index")) {
+					// continue;
+					// }
+					if (StringUtils.countMatches(seed, "/") < 5) {
 						seedLinks.add(seed.trim());
 					}
 				}
@@ -336,6 +337,7 @@ public class ReaperWorkerThread extends Thread {
 		} else {
 			charset = task.getCharset();
 		}
+		ByteArrayInputStream bais = null;
 		try {
 			HttpClientUtils httpClient = new HttpClientUtils();
 			String data = httpClient.get(task.getURL(), task.getProxy(), task.getCookieStore(), charset);
@@ -343,10 +345,18 @@ public class ReaperWorkerThread extends Thread {
 				return;
 			}
 			byte[] responseData = data.getBytes();
-			ByteArrayInputStream bais = new ByteArrayInputStream(responseData);
+			bais = new ByteArrayInputStream(responseData);
 			extractor.parse(bais, charset);
 		} catch (Exception e) {
 			LOGGER.error("HTTP request error!", e);
+		} finally {
+			if (null == bais) {
+			} else {
+				try {
+					bais.close();
+				} catch (IOException e) {
+				}
+			}
 		}
 		url2node = extractor.getUrlsWithAttribute();
 	}

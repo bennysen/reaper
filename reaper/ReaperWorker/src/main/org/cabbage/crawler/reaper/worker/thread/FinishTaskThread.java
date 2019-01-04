@@ -30,7 +30,7 @@ public class FinishTaskThread extends Thread {
 	 */
 	public void run() {
 		while (true) {
-			LOGGER.info("    ResponseTaskThread is running ... ");
+//			LOGGER.info("    FinishTaskThread is running ... ");
 			try {
 				process();
 			} catch (Exception e) {

@@ -34,14 +34,14 @@ public class CheckTaskStateThread extends Thread {
 			return;
 		}
 		while (true) {
-			LOGGER.info("................. CheckTaskStateThread is alive!");
+//			LOGGER.info("................. CheckTaskStateThread is alive!");
 			if (ReaperWorker.isErrorCountFull()) {
 				ReaperWorker.terminate("ERROR_COUNT is full!");
 			} else if (ReaperWorker.isTooManyOpenFile()) {
 				ReaperWorker.terminate("TOO_MANY_OPEN_FILES_COUNT is full!");
 
 			}
-			LOGGER.info("    CheckTaskStateThread is running ... ");
+//			LOGGER.info("    CheckTaskStateThread is running ... ");
 			try {
 				checkAllTaskState();
 			} catch (Exception e) {

@@ -197,7 +197,7 @@ public class RabbitMQUtils {
 				|| null == queue || queue.trim().length() == 0) {
 			LOGGER.error("Check configure file,MQ configures are invalid!");
 		} else {
-			LOGGER.info("MQ configures for get ReaperTask[" + mqHost + ":" + mqPort + "/" + queue + "{" + mqUsername
+			LOGGER.info("MQ configures for reset[" + mqHost + ":" + mqPort + "/" + queue + "{" + mqUsername
 					+ "/" + mqPassword + "}]");
 		}
 

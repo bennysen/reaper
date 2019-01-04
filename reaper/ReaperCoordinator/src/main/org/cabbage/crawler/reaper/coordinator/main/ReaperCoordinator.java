@@ -110,9 +110,9 @@ public class ReaperCoordinator {
 
 	public static void main(String[] args) {
 
-		checkReset();
-
 		init();
+		
+		checkReset();
 
 		checkAllTaskState();
 
