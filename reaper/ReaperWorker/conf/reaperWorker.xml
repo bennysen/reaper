@@ -61,7 +61,7 @@
 	<!-- reaper worker configure -->
 	<property>
 		<name>maxTaskCount</name>
-		<value>32</value>
+		<value>8</value>
 	</property>
 	<property>
 		<name>maxTaskHeartbeatIdleSecond</name>

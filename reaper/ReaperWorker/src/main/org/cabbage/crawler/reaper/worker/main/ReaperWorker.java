@@ -93,14 +93,11 @@ public class ReaperWorker {
 		try {
 			String resetQueue = Configure.getInstance(false).getProperty("mq_q_reset");
 			RabbitMQUtils.send(resetQueue, getDevice());
-			Thread.sleep(10000);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		} catch (ReaperException e) {
 			LOGGER.error("", e);
 		} catch (TimeoutException e) {
-			LOGGER.error("", e);
-		} catch (InterruptedException e) {
 			LOGGER.error("", e);
 		}
 	}
@@ -167,12 +164,12 @@ public class ReaperWorker {
 	}
 
 	public synchronized static int getCurrentTaskSize() {
-		int count = 0;
+		int count = ManagerHandle.getInstance().getRunTasks().size();
 		return count;
 	}
 
 	public synchronized static int getCurrentStopTaskSize() {
-		int count = 0;
+		int count = ManagerHandle.getInstance().getStopTasks().size();
 		return count;
 	}
 

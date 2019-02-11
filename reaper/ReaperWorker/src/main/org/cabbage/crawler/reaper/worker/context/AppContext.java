@@ -44,14 +44,9 @@ public class AppContext {
 
 	public synchronized static void removeTask(Long taskID) {
 		TASKS.remove(taskID);
-		removeTaskCheckTime(taskID);
+		LAST_ACTIVE_TIME_MAP.remove(taskID);
 	}
 
-	public synchronized static void removeTaskCheckTime(Long taskid) {
-		if (null != taskid) {
-			LAST_ACTIVE_TIME_MAP.remove(taskid);
-		}
-	}
 
 	public synchronized static ReaperTask getTask() {
 		return CURRENT_TASK.get();

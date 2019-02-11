@@ -58,6 +58,8 @@ public class ReaperWorkerThread extends Thread {
 	Set<String> produceLinks = null;
 	Set<String> seedLinks = new CopyOnWriteArraySet<String>();
 
+	int maxSeedLinks = 2048;
+
 	/**
 	 * 
 	 * @throws ReaperException
@@ -128,11 +130,12 @@ public class ReaperWorkerThread extends Thread {
 	 */
 	public void run() {
 		LOGGER.info("Task [" + task.getURL() + "] is running!");
-		process();
+		seedLinks.add(task.getURL());
 		while (true) {
 			if (null == seedLinks || seedLinks.size() == 0) {
 				break;
 			}
+			LOGGER.info("TaskID[" + task.getID() + "][" + task.getURL() + "][" + seedLinks.size() + "]");
 			String perURL = task.getURL();
 			for (String seed : seedLinks) {
 				task.setPreURL(perURL);
@@ -141,6 +144,7 @@ public class ReaperWorkerThread extends Thread {
 				produceLinks = null;
 				url2node = null;
 				process();
+				seedLinks.remove(task.getURL());
 			}
 			LOGGER.warn("Seed links size = [" + seedLinks.size() + "]");
 		}
@@ -160,17 +164,14 @@ public class ReaperWorkerThread extends Thread {
 		}
 		// step x filter
 		filteredLinks = doFilter(url2node);
+
 		// step x classify
-		classify();
+		List<URLClassifierEntity> uEntityList = classify(task.getURL(), filteredLinks);
+		// step x markSeedLinks
+		markSeedLinks(uEntityList);
 		// setp x calculate
 		calculate();
 
-		URLStringFilter usf = ULRStringFilterFactory.getInstance().getFilter(domain, URLStringFilter.OUTPUT);
-		if (null == usf) {
-		} else {
-			usf.setLinks(filteredLinks);
-			filteredLinks = usf.filter();
-		}
 		if (null == filteredLinks || filteredLinks.size() == 0) {
 			LOGGER.warn("Task [" + task.getURL() + "] is get nothing!");
 			finish();
@@ -179,6 +180,7 @@ public class ReaperWorkerThread extends Thread {
 
 		// step x reduce
 		produceLinks = ReduceUtils.reduce(domain, filteredLinks);
+
 		// for (String url : produceLinks) {
 		// System.err.println(url);
 		// }
@@ -191,6 +193,43 @@ public class ReaperWorkerThread extends Thread {
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+
+	private void markSeedLinks(List<URLClassifierEntity> uEntityList) {
+		if (null == uEntityList || uEntityList.size() == 0) {
+			return;
+		}
+		int j = uEntityList.size();
+		if (j > 3) {
+			j = 3;
+		}
+		if (j < 2) {
+			// can not classifier!
+			return;
+		}
+		for (int i = 0; i < j; i++) {
+			URLClassifierEntity uEntity = uEntityList.get(i);
+			LOGGER.info("Feature url[" + uEntity.getRatio() + "]:" + uEntity.getFeatureURL());
+			Set<String> uSet = uEntity.getURLSet();
+			if (null == uSet || uSet.size() == 0) {
+				break;
+			} else {
+				for (String seed : uSet) {
+					if (seedLinks.size() > maxSeedLinks) {
+						break;
+					}
+					if (null == seed || seed.trim().length() == 0) {
+						continue;
+					}
+					// if (seed.contains("index")) {
+					// continue;
+					// }
+					if (StringUtils.countMatches(seed, "/") < 5) {
+						seedLinks.add(seed.trim());
+					}
+				}
+			}
 		}
 	}
 
@@ -285,45 +324,15 @@ public class ReaperWorkerThread extends Thread {
 	/**
 	 * 链接URL格式分类
 	 */
-	private void classify() {
+	private List<URLClassifierEntity> classify(String taskURL, Set<String> filteredLinks) {
 		List<URLClassifierEntity> uEntityList = null;
 		try {
-			uEntityList = new URLClassifier().urlCrawledFilter(task.getURL(), filteredLinks);
+			uEntityList = new URLClassifier().urlCrawledFilter(taskURL, filteredLinks);
 		} catch (Exception e) {
 			LOGGER.warn("URLClassifier error!", e);
-			return;
+			return null;
 		}
-		int j = uEntityList.size();
-		if (j > 3) {
-			j = 3;
-		}
-		if (j < 2) {
-			// can not classifier!
-			return;
-		}
-		for (int i = 0; i < j; i++) {
-			URLClassifierEntity uEntity = uEntityList.get(i);
-			LOGGER.info("Feature url[" + uEntity.getRatio() + "]:" + uEntity.getFeatureURL());
-			Set<String> uSet = uEntity.getURLSet();
-			if (null == uSet || uSet.size() == 0) {
-				break;
-			} else {
-				for (String seed : uSet) {
-					if (seedLinks.size() > 1024) {
-						break;
-					}
-					if (null == seed || seed.trim().length() == 0) {
-						continue;
-					}
-					// if (seed.contains("index")) {
-					// continue;
-					// }
-					if (StringUtils.countMatches(seed, "/") < 5) {
-						seedLinks.add(seed.trim());
-					}
-				}
-			}
-		}
+		return uEntityList;
 	}
 
 	private void doHttp() {

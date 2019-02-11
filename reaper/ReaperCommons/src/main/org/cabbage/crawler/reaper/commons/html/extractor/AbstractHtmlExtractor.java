@@ -418,10 +418,10 @@ public abstract class AbstractHtmlExtractor extends AbstractExtractor {
 		elements.addAll(document.selectNodes("//@HREF"));
 		for (DefaultAttribute element : elements) {
 			String url = element.getText();
-			if (isJunkUrl(url)) {
+			if (null == url || "".equals(url.trim()) || isJunkUrl(url)) {
 				continue;
 			}
-			url = this.assembledUrl(super.getUrl(), url);
+			url = this.assembledUrl(super.getUrl(), url.trim());
 			map.put(url, element);
 		}
 		return map;

@@ -29,11 +29,7 @@ public class TaskHeartbeatThread extends Thread {
 			try {
 				Map<Long, Date> map = AppContext.getAllLastActiveTimeMap();
 				if (null == map || map.size() == 0) {
-					try {
-						Thread.sleep(60000);
-					} catch (Exception e) {
-						LOGGER.error(e);
-					}
+					
 				} else {
 					process(map);
 				}

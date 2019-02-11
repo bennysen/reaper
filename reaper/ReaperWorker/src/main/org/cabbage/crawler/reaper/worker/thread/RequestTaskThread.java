@@ -41,7 +41,10 @@ public class RequestTaskThread extends Thread {
 	}
 
 	public void run() {
-
+		try {
+			Thread.sleep(30000);
+		} catch (InterruptedException e2) {
+		}
 		while (true) {
 			try {
 				int currentTotalTaskSize = ReaperWorker.getCurrentTaskSize();

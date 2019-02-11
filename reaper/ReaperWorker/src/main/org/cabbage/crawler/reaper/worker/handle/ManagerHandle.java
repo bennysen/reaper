@@ -113,6 +113,7 @@ public class ManagerHandle {
 			workHandle.stopTask();
 			runTaskMap.remove(task.getID());
 			stopTaskMap.put(task.getID(), workHandle);
+			AppContext.removeTask(task.getID());
 			return true;
 		} else {
 			LOGGER.info("Function【stopTask】The runTaskList does not contains task[" + task.getID() + "," + task.getURL()
@@ -144,8 +145,12 @@ public class ManagerHandle {
 		}
 	}
 
-	public Map<Long, WorkerHandle> getTaskList() {
+	public Map<Long, WorkerHandle> getRunTasks() {
 		return runTaskMap;
+	}
+	
+	public Map<Long, WorkerHandle> getStopTasks() {
+		return stopTaskMap;
 	}
 
 	public List<ReaperTask> getTask(int number) throws ReaperException, IOException, TimeoutException {

@@ -69,7 +69,7 @@ public class CheckProcessingTaskThread extends Thread {
 					}
 				}
 				try {
-					Thread.sleep(5000);
+					Thread.sleep(1000);
 				} catch (Exception e) {
 					LOGGER.error(e);
 				}

@@ -55,7 +55,7 @@ public class CheckRunningTaskStateThread extends Thread {
 				List<ReaperTask> tasks = scanTaskInProcessing();
 				check(tasks);
 				try {
-					Thread.sleep(5000);
+					Thread.sleep(1000);
 				} catch (Exception e) {
 					LOGGER.error(e);
 				}
@@ -104,7 +104,7 @@ public class CheckRunningTaskStateThread extends Thread {
 		List<ReaperTask> tasks = new ArrayList<ReaperTask>();
 		ReaperTaskDAO dao = (ReaperTaskDAO) AppContext.APP_CONTEXT.getBean("ReaperTaskDAO");
 		Json query = new Json();
-		query.a("status", new Long(2));
+		query.a("status", new Long(1));
 		Json order = new Json();
 		order.a("lastUpdateTime", "desc");
 		QueryResult<ReaperTaskBean> r = dao.find(query, order, 0, 64);

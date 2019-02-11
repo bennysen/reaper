@@ -47,7 +47,7 @@ public class ProduceTaskThread extends Thread {
 				List<ReaperTask> tasks = scanTask4Produce();
 				sendTask2MQ(tasks);
 				try {
-					Thread.sleep(5000);
+					Thread.sleep(1000);
 				} catch (Exception e) {
 					LOGGER.error(e);
 				}

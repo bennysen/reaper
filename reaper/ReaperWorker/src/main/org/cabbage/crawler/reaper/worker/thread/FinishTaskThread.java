@@ -10,6 +10,7 @@ import org.cabbage.crawler.reaper.worker.handle.ManagerHandle;
  * 
  */
 public class FinishTaskThread extends Thread {
+	
 	private static final Log LOGGER = LogFactory.getLog(FinishTaskThread.class);
 
 	private ManagerHandle managerHandle;
